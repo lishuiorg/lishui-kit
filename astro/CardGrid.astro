@@ -1,0 +1,18 @@
+---
+/* 条目卡网格：entries 为空时给空状态；noresult 给筛选无命中时的提示，
+   文案由站点传入（中英各一份）。 */
+import EntryCard from './EntryCard.astro';
+
+const { entries = [], ctx, noresult = '', empty = '' } = Astro.props;
+---
+
+{entries.length > 0 ? (
+  <>
+    <div class="cards">
+      {entries.map((entry) => <EntryCard entry={entry} ctx={ctx} />)}
+    </div>
+    {noresult && <p class="noresult" data-noresult data-visible="false">{noresult}</p>}
+  </>
+) : (
+  empty && <p class="empty">{empty}</p>
+)}

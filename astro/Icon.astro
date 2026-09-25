@@ -1,0 +1,11 @@
+---
+/* 图标：按名取 glyphs.mjs 里的线条图；class 直接落在 svg 上，
+   与设计系统的选择器（.wordmark__mark、.iconbtn__sun 等）对齐。 */
+import { GLYPHS } from './glyphs.mjs';
+
+const { name, class: className } = Astro.props;
+const svg = GLYPHS[name] || '';
+const marked = className ? svg.replace('<svg ', `<svg class="${className}" `) : svg;
+---
+
+<Fragment set:html={marked} />

@@ -1,0 +1,25 @@
+---
+/* 页头：界格竖线 + 眉题 + 标题 + 导语 + 附注 + 元信息。
+   meta 每项为 { label, value?, href? }；带 href 的渲染成链接。 */
+const { eyebrow, title, lede = '', note = '', meta = [] } = Astro.props;
+---
+
+<section class="pagehead">
+  <div class="pagehead__rule" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="wrap pagehead__inner">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h1 class="pagehead__title">{title}</h1>
+    {lede && <p class="pagehead__lede">{lede}</p>}
+    {note && <p class="pagehead__note">{note}</p>}
+    {meta.length > 0 && (
+      <div class="pagehead__meta">
+        {meta.map((m) => (
+          <span>
+            {m.href ? <a href={m.href}>{m.label}</a> : m.label}
+            {!m.href && m.value !== undefined && <>{'\u3000'}<b>{m.value}</b></>}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</section>

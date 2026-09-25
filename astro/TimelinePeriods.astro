@@ -1,0 +1,52 @@
+---
+/* 时间轴分期块：首页给预览（limit 条），时间轴页给全量。
+   periods 由站点算好：{ key, name, range, items }，items 已按期与年份排好。
+   searchable 为真时条目带筛选属性，并在每个分期外层标 data-search-group，
+   让筛选后空掉的分期整块隐藏、计数随之更新（见 client/filter.js）。 */
+const {
+  periods = [], ctx, limit = 0,
+  showTags = false, searchable = false,
+  emptyText = '', countUnit = '',
+} = Astro.props;
+---
+
+<div class="tl">
+  {periods.map((period) => {
+    const items = limit > 0 ? period.items.slice(0, limit) : period.items;
+    return (
+      <section class="tl__period" data-search-group={searchable ? '' : undefined}>
+        <header class="tl__head">
+          <h2 class="tl__name">{period.name}</h2>
+          {period.range && <span class="tl__range">{period.range}</span>}
+          <span class="tl__count" data-group-count data-unit={countUnit}>
+            {period.items.length} {countUnit}
+          </span>
+        </header>
+        {items.length > 0 ? (
+          <ol class="tl__items">
+            {items.map((entry) => {
+              const y = ctx.axisYear(entry);
+              const tags = (entry.tags || []).slice(0, 3);
+              return (
+                <li class="tl__item" {...(searchable ? ctx.filterAttrs(entry) : {})}>
+                  <span class="tl__year">{y.main}{y.sub && <small>{y.sub}</small>}</span>
+                  <a class="tl__link" href={entry.path}>
+                    <span class="tl__title">{entry.title}</span>
+                    {entry.subtitle && <span class="tl__sub">{entry.subtitle}</span>}
+                    {showTags && tags.length > 0 && (
+                      <span class="tl__tags">
+                        {tags.map((tag) => <span class="tagchip">{ctx.tagLabel(tag)}</span>)}
+                      </span>
+                    )}
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <p class="tl__count">{emptyText}</p>
+        )}
+      </section>
+    );
+  })}
+</div>

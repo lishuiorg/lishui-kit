@@ -1,0 +1,7 @@
+/* lishui-kit · 样式总入口
+   站点只需 import 'lishui-kit/styles/index.css'，不必逐份引入。 */
+
+@import './tokens.css';
+@import './base.css';
+@import './knowledge.css';
+@import './responsive.css';

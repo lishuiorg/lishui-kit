@@ -1,0 +1,21 @@
+---
+/* 类别卡：本站的类别网格。每项由站点算好：
+   { href, glyph, name, alt, desc, count, countUnit, browseAll, empty } */
+import Icon from './Icon.astro';
+
+const { items = [] } = Astro.props;
+---
+
+<div class="cats">
+  {items.map((cat) => (
+    <a class={`cat${cat.empty ? ' cat--empty' : ''}`} href={cat.href}>
+      <span class="cat__glyph"><Icon name={cat.glyph} /></span>
+      <span class="cat__name">{cat.name}<span class="cat__alt">{cat.alt}</span></span>
+      <span class="cat__desc">{cat.desc}</span>
+      <span class="cat__foot">
+        <span class="cat__count">{cat.count} {cat.countUnit}</span>
+        <span class="cat__go">{cat.browseAll}</span>
+      </span>
+    </a>
+  ))}
+</div>

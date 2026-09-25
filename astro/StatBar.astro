@@ -1,0 +1,13 @@
+---
+/* 统计条：四项数字，由构建时统计填进来。items 每项为 { label, value }。 */
+const { items = [] } = Astro.props;
+---
+
+<div class="stats">
+  {items.map((item) => (
+    <div class="stat">
+      <span class="stat__v">{item.value}</span>
+      <span class="stat__k">{item.label}</span>
+    </div>
+  ))}
+</div>

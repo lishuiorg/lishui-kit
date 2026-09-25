@@ -1,0 +1,28 @@
+---
+/* 首屏：眉题 + 标题 + 导语 + 查找框 + 查找说明。
+   查找框只负责把关键词带到目标页（通常是索引页）的 #q=，
+   实际查找在目标页的已生成内容上跑，见 client/filter.js。 */
+import Icon from './Icon.astro';
+
+const {
+  eyebrow = '', title, lede = '',
+  searchTarget = '', searchPlaceholder = '', searchLabel = '', searchButton = '', hint = '',
+} = Astro.props;
+---
+
+<section class="hero">
+  <div class="wrap hero__inner">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h1 class="hero__title">{title}</h1>
+    {lede && <p class="hero__lede">{lede}</p>}
+    {searchTarget && (
+      <form class="searchbar" data-homesearch data-target={searchTarget} role="search">
+        <Icon name="search" />
+        <label class="sr-only" for="q">{searchLabel}</label>
+        <input id="q" type="search" name="q" placeholder={searchPlaceholder} autocomplete="off" />
+        <button class="searchbar__btn" type="submit">{searchButton}</button>
+      </form>
+    )}
+    {hint && <p class="searchhint">{hint}</p>}
+  </div>
+</section>

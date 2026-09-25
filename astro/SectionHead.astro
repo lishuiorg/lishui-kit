@@ -1,0 +1,12 @@
+---
+/* 章节头：小字眉题 + 标题 + 右侧说明。首页与关于页共用。 */
+const { eyebrow = '', title, note = '' } = Astro.props;
+---
+
+<div class="section__head">
+  <div>
+    {eyebrow && <p class="section__eyebrow">{eyebrow}</p>}
+    <h2 class="section__title">{title}</h2>
+  </div>
+  {note && <p class="section__note">{note}</p>}
+</div>

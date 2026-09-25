@@ -1,0 +1,31 @@
+---
+/* 筛选条：搜索框 + 若干组选项 + 状态与清除。
+   groups 每项为 { key, label, options: [{ value, label }] }，
+   值一律用内容库的原始取值（data-filter="组:值"），界面文字由站点译好。
+   约定见 client/filter.js。 */
+import Icon from './Icon.astro';
+
+const { ui, groups = [], search = true } = Astro.props;
+---
+
+<form class="filters" data-filterform role="search">
+  {search && (
+    <div class="filters__search">
+      <Icon name="search" />
+      <label class="sr-only" for="q">{ui.list.search}</label>
+      <input id="q" type="search" name="q" placeholder={ui.list.search} autocomplete="off" data-search-input />
+    </div>
+  )}
+  {groups.map((group) => (
+    <div class="filters__group" data-filtergroup={group.key}>
+      <span class="filters__label">{group.label}</span>
+      {group.options.map((option) => (
+        <button type="button" class="chipbtn" data-filter={`${group.key}:${option.value}`} aria-pressed="false">{option.label}</button>
+      ))}
+    </div>
+  ))}
+  <div class="filters__foot">
+    <span class="filters__state" data-filterstate></span>
+    <button type="button" class="filters__clear" data-filter-clear>{ui.list.clear}</button>
+  </div>
+</form>

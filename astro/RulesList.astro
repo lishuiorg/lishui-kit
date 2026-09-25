@@ -1,0 +1,17 @@
+---
+/* 凡例：编号 + 标题 + 说明。说明允许带行内标记（code、a），故按 HTML 渲染，
+   内容由站点自己撰写，不来自外部输入。 */
+const { items = [] } = Astro.props;
+---
+
+<div class="rules">
+  {items.map((item) => (
+    <div class="rule-item">
+      <span class="rule-item__no">{item.no}</span>
+      <div>
+        <h3 class="rule-item__title">{item.title}</h3>
+        <p class="rule-item__text" set:html={item.text} />
+      </div>
+    </div>
+  ))}
+</div>

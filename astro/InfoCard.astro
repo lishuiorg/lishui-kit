@@ -1,0 +1,37 @@
+---
+/* 信息卡：详情页侧栏的字段表。
+   有年份时「时间」只给公元年，纪年另列一行；无年份时时间已退回纪年，不再重复。
+   纪年优先取顶层 era（地点条目的时期名），其次 time.era。 */
+const { entry, ctx } = Astro.props;
+const { ui } = ctx;
+
+const rows = [];
+const push = (key, value) => { if (value) rows.push({ key, value }); };
+
+push(ui.detail.type, ctx.typeLabel(entry));
+push(ui.detail.category, ctx.catLabel(entry));
+push(ui.detail.time, ctx.timeText(entry));
+
+const eraRaw = entry.era || entry.time?.era || '';
+if (eraRaw && typeof entry.time?.start === 'number') push(ui.detail.era, ctx.gloss(eraRaw, ctx.lang));
+if (entry.time?.dynasty) push(ui.detail.dynasty, ctx.gloss(entry.time.dynasty, ctx.lang));
+if (entry.time?.precision) push(ui.detail.precision, ctx.enumLabel('precision', entry.time.precision));
+if (entry.place_type) push(ui.detail.placeType, ctx.enumLabel('placeType', entry.place_type));
+if (entry.protection_level) push(ui.detail.protection, ctx.enumLabel('protectionLevel', entry.protection_level));
+if (entry.protection_batch) push(ui.detail.protectionBatch, entry.protection_batch);
+if (entry.address) push(ui.detail.address, ctx.gloss(entry.address, ctx.lang));
+if (entry.genre) push(ui.detail.genre, ctx.enumLabel('genre', entry.genre));
+push(ui.detail.depth, ctx.depthLabel(entry));
+push(ui.detail.confidence, ctx.confLabel(entry));
+push(ui.detail.updated, entry.updated);
+---
+
+<div class="infocard">
+  <h2 class="aside__head">{ui.detail.info}</h2>
+  <dl>
+    {rows.map((row) => (
+      <Fragment><dt>{row.key}</dt><dd>{row.value}</dd></Fragment>
+    ))}
+    {entry.outcome && <Fragment><dt>{ui.detail.outcome}</dt><dd>{entry.outcome}</dd></Fragment>}
+  </dl>
+</div>

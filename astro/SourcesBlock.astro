@@ -1,0 +1,37 @@
+---
+/* 来源块：条目引用的来源逐条著录。
+   来源记录按原文献语言著录——出版者另给英文写法，授权说明与引文位置（卷次、门类、页码）
+   保留原文，便于读者回到原书查证。 */
+const { entry, ctx } = Astro.props;
+const { ui } = ctx;
+const list = entry.sourcesResolved || [];
+const sep = ui.labelSep;
+---
+
+{list.length > 0 && (
+  <section class="srcs" aria-label={ui.detail.sources}>
+    <h2 class="aside__head">{ui.detail.sources}</h2>
+    <ol>
+      {list.map((src) => {
+        const title = ctx.lang === 'en' ? (src.titleEn || src.title) : src.title;
+        const publisher = ctx.lang === 'en' ? (src.publisherEn || src.publisher) : src.publisher;
+        const note = src.refNote || src.note || '';
+        const bits = [
+          publisher || '',
+          src.rights ? `${ui.detail.sourceRights}${sep}${ctx.rightsLabel(src.rights)}` : '',
+          src.accessed ? `${ui.detail.sourceAccessed} ${src.accessed}` : '',
+        ].filter(Boolean);
+        return (
+          <li>
+            <span class="srcs__title">
+              {src.url ? <a href={src.url} target="_blank" rel="noopener">{title}</a> : title}
+            </span>
+            {bits.length > 0 && <span class="srcs__row">{bits.join('　·　')}</span>}
+            {src.locator && <span class="srcs__row">{ui.detail.sourceLocator}{sep}{src.locator}</span>}
+            {note && <span class="srcs__note">{note}</span>}
+          </li>
+        );
+      })}
+    </ol>
+  </section>
+)}

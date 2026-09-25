@@ -1,0 +1,25 @@
+---
+/* 条目卡：列表页与首页「最新更新」共用。
+   年份、类别、标签、可靠性标都由 ctx 派生；卡片自带筛选属性，
+   供 client/filter.js 在已生成的页面上筛选，不需要第二份数据。 */
+const { entry, ctx } = Astro.props;
+const y = ctx.axisYear(entry);
+const tags = (entry.tags || []).slice(0, 3);
+const flags = ctx.flags(entry);
+const attrs = ctx.filterAttrs(entry);
+---
+
+<a class={`card card--${entry.type}`} href={entry.path} {...attrs}>
+  <span class="card__top">
+    <span class="card__year">{y.main}</span>
+    <span class="card__badge">{ctx.catLabel(entry)}</span>
+  </span>
+  <span class="card__title">{entry.title}</span>
+  {entry.subtitle && <span class="card__sub">{entry.subtitle}</span>}
+  {entry.summary && <span class="card__sum">{entry.summary}</span>}
+  <span class="card__foot">
+    {tags.map((tag) => <span class="tagchip">{ctx.tagLabel(tag)}</span>)}
+    {flags.map((flag) => <span class={`flag flag--${flag.level}`}>{flag.text}</span>)}
+    <span class="card__meta">{ctx.depthLabel(entry)}</span>
+  </span>
+</a>

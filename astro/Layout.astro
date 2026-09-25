@@ -1,0 +1,161 @@
+---
+/* lishui-kit · 页面外壳
+ *
+ * 一个分站的全部页面都套这一层：head 元信息、顶栏、页脚、主题与脚本。
+ * 站点把数据传进来，不重写这层：
+ *   site        站点常量（name/nameEn/origin/portal/portalName/portalNameEn/host/contentUpdated）
+ *   ui          界面串（含 lang、langShort、labelSep、nav、theme、footer 等）
+ *   path        当前页面路径（用于 canonical 与语言切换）
+ *   nav         主导航 [{ section, label }]
+ *   progress    正文页的阅读进度条
+ *   jsonLd      结构化数据对象
+ */
+import '../styles/index.css';
+import { altPath, sectionPath } from '../i18n/paths.mjs';
+import Icon from './Icon.astro';
+
+const {
+  site, lang, ui, path,
+  title, description,
+  active = '',
+  nav = [],
+  progress = false,
+  noindex = false,
+  jsonLd = null,
+} = Astro.props;
+
+const canonical = `${site.origin}${path}`;
+const alt = altPath(path, lang);
+const siteName = lang === 'zh' ? site.name : site.nameEn;
+const fullTitle = active === 'home' ? `${siteName} · ${title}` : `${title} · ${siteName}`;
+const homePath = sectionPath('home', lang);
+const portalPath = `${site.portal}${lang === 'en' ? '/en/' : '/'}`;
+const footerNav = nav.filter((item) => item.section !== 'home');
+const jsonLdText = jsonLd ? JSON.stringify(jsonLd, null, 2) : '';
+---
+
+<!DOCTYPE html>
+<html lang={ui.lang} data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{fullTitle}</title>
+<meta name="description" content={description}>
+<meta name="theme-color" content="#F6F4EE">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+{noindex && <meta name="robots" content="noindex">}
+<link rel="canonical" href={canonical}>
+<link rel="alternate" hreflang="zh-Hans" href={`${site.origin}${lang === 'zh' ? path : alt}`}>
+<link rel="alternate" hreflang="en" href={`${site.origin}${lang === 'en' ? path : alt}`}>
+<link rel="alternate" hreflang="x-default" href={`${site.origin}${lang === 'zh' ? path : alt}`}>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content={`${siteName} · Lishui, Nanjing`}>
+<meta property="og:locale" content={lang === 'zh' ? 'zh_CN' : 'en_US'}>
+<meta property="og:locale:alternate" content={lang === 'zh' ? 'en_US' : 'zh_CN'}>
+<meta property="og:title" content={fullTitle}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={`${site.origin}/assets/img/og-cover.jpg`}>
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content={fullTitle}>
+<meta name="twitter:description" content={description}>
+<meta name="twitter:image" content={`${site.origin}/assets/img/og-cover.jpg`}>
+
+<script is:inline>
+  /* 在样式生效前定好主题，避免刷新时先亮后暗；并标记脚本就位，
+     让滚动入场只在脚本可用时隐藏内容——脚本失败时内容照常显示 */
+  (function () {
+    document.documentElement.classList.add('js');
+    var t = null;
+    try { t = localStorage.getItem('lishui-theme'); } catch (e) { /* 隐私模式 */ }
+    if (!t) {
+      t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', t === 'dark' ? '#0C1211' : '#F6F4EE');
+  })();
+</script>
+
+<noscript>
+  <style>
+    .hero__inner > * { animation: none; opacity: 1; transform: none; }
+    .js .reveal { opacity: 1; transform: none; }
+  </style>
+</noscript>
+{jsonLdText && <script type="application/ld+json" is:inline set:html={jsonLdText} />}
+</head>
+<body>
+{progress && <div class="progress" data-progress aria-hidden="true"></div>}
+<a class="skip-link" href="#main">{ui.skip}</a>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="wordmark" href={homePath} aria-label={siteName}>
+      <Icon name="mark" class="wordmark__mark" />
+      <span>
+        <span class="wordmark__text">{siteName}</span>
+        <span class="wordmark__sub">{ui.wordmark.sub}</span>
+      </span>
+    </a>
+
+    <nav class="topnav" aria-label={lang === 'zh' ? '主导航' : 'Main navigation'}>
+      {nav.map((item) => (
+        <a href={sectionPath(item.section, lang)} aria-current={item.section === active ? 'page' : undefined}>{item.label}</a>
+      ))}
+    </nav>
+
+    <div class="topbar__tools">
+      <div class="langswitch" role="group" aria-label={ui.langLabel}>
+        <a href={lang === 'zh' ? path : alt} lang="zh-Hans" aria-current={lang === 'zh' ? 'true' : undefined} data-lang-switch>中</a>
+        <a href={lang === 'en' ? path : alt} lang="en" hreflang="en" aria-current={lang === 'en' ? 'true' : undefined} data-lang-switch>EN</a>
+      </div>
+      <button class="iconbtn" type="button" data-theme-toggle aria-pressed="false"
+              aria-label={ui.theme.dark}
+              data-label-dark={ui.theme.dark} data-label-light={ui.theme.light}>
+        <Icon name="sun" class="iconbtn__sun" />
+        <Icon name="moon" class="iconbtn__moon" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <slot />
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div class="footer__brand">
+      <Icon name="mark" />
+      <p class="footer__about">{ui.footer.about}</p>
+    </div>
+    <div class="footer__links">
+      <h4>{ui.nav.home}</h4>
+      {footerNav.map((item) => (
+        <a href={sectionPath(item.section, lang)}>{item.label}</a>
+      ))}
+    </div>
+    <div class="footer__links">
+      <h4>{lang === 'zh' ? '站群' : 'Network'}</h4>
+      <a href={portalPath}>{lang === 'zh' ? site.portalName : site.portalNameEn}</a>
+    </div>
+  </div>
+  <div class="wrap footer__bottom">
+    <span>© <span data-year>2026</span> {siteName} · {ui.footer.rights}</span>
+    <span>{ui.footer.updated} {site.contentUpdated || ''}</span>
+  </div>
+</footer>
+
+<script>
+  import { initSite } from '../client/index.js';
+  import { initKnowledgePage } from '../client/filter.js';
+
+  initSite();
+  initKnowledgePage();
+</script>
+</body>
+</html>

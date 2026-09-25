@@ -1,0 +1,16 @@
+---
+/* 本页目录：正文 h2/h3 的锚点表，由内容装载时抽出（entry.toc）。 */
+const { entry, ctx } = Astro.props;
+const toc = entry.toc || [];
+---
+
+{toc.length > 0 && (
+  <nav class="toc" aria-label={ctx.ui.detail.toc}>
+    <h2 class="aside__head">{ctx.ui.detail.toc}</h2>
+    <ol>
+      {toc.map((head) => (
+        <li data-level={head.level}><a href={`#${head.id}`}>{head.text}</a></li>
+      ))}
+    </ol>
+  </nav>
+)}

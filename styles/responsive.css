@@ -1,0 +1,41 @@
+/* ==========================================================================
+   lishui-kit · 响应式与偏好
+   只收共用规则；各站特有的组件断点写在各自的样式里。
+   ========================================================================== */
+
+@media (max-width: 1080px) {
+  .section__head { grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  .footer__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .footer__grid > :first-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) {
+  .topnav { display: none; }
+  .hero__scroll, .hero__seal { display: none; }
+}
+
+@media (max-width: 640px) {
+  :root { --gutter: 18px; }
+  .footer__grid { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+  .searchbar { flex-wrap: wrap; padding: 12px; }
+  .searchbar > svg { display: none; }
+  .searchbar input { flex: 1 1 100%; padding: 4px 4px 10px; }
+  .searchbar__btn { flex: 1 1 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .js .reveal { opacity: 1; transform: none; }
+  .hero__title em::after { transform: scaleX(1); }
+}
+
+@media print {
+  .topbar, .hero__scroll, .hero__seal, .footer__grid > :not(:first-child) { display: none; }
+  body::after { display: none; }
+  .hero__bg { display: none; }
+}

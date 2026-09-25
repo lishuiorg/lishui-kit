@@ -1,0 +1,23 @@
+{
+  "name": "lishui-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "溧水知识站群共享底座：设计系统、知识组件、内容装载、校验规则、多语言。",
+  "exports": {
+    ".": "./index.mjs",
+    "./styles/*": "./styles/*",
+    "./client/*": "./client/*",
+    "./content/*": "./content/*",
+    "./i18n/*": "./i18n/*",
+    "./seo/*": "./seo/*",
+    "./validate/*": "./validate/*",
+    "./astro/*": "./astro/*"
+  },
+  "dependencies": {
+    "marked": "^15.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

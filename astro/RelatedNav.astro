@@ -1,0 +1,21 @@
+---
+/* 关联条目：正文提到、且已在同站有条目的地点与相关条目。
+   解析在内容装载时完成（entry.placeRefResolved / entry.relatedResolved）。 */
+const { entry, ctx } = Astro.props;
+const items = [...(entry.placeRefResolved || []), ...(entry.relatedResolved || [])];
+---
+
+{items.length > 0 && (
+  <nav class="rel" aria-label={ctx.ui.detail.related}>
+    <h2 class="aside__head">{ctx.ui.detail.related}</h2>
+    <ul>
+      {items.map((item) => (
+        <li>
+          <a href={item.path}>
+            <span class="rel__kind">{ctx.typeLabel(item)}</span>{item.title}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
