@@ -92,6 +92,15 @@ const jsonLdText = jsonLd ? JSON.stringify(jsonLd, null, 2) : '';
 {progress && <div class="progress" data-progress aria-hidden="true"></div>}
 <a class="skip-link" href="#main">{ui.skip}</a>
 
+<div class="netbar">
+  <div class="wrap netbar__inner">
+    <a class="netbar__back" href={portalPath}>
+      <span class="netbar__arrow" aria-hidden="true">←</span>
+      <span>{lang === 'zh' ? site.portalName : site.portalNameEn}</span>
+    </a>
+  </div>
+</div>
+
 <header class="topbar">
   <div class="wrap topbar__inner">
     <a class="wordmark" href={homePath} aria-label={siteName}>

@@ -34,7 +34,7 @@ import 'lishui-kit/styles/index.css';
 | 文件 | 内容 |
 | --- | --- |
 | `tokens.css` | 色板、字号、间距、圆角、阴影，明暗两套值挂在 `[data-theme]` 上 |
-| `base.css` | 重置、排版、顶栏、页脚、按钮、首屏 `.hero`、眉题 `.eyebrow`、查找框 `.searchbar`、凡例、无结果 |
+| `base.css` | 重置、排版、站群带、顶栏、页脚、按钮、首屏 `.hero`、眉题 `.eyebrow`、查找框 `.searchbar`、凡例、无结果 |
 | `knowledge.css` | 知识组件样式：条目卡、类别卡、信息卡、目录、来源块、时间轴、索引表、统计条 |
 | `responsive.css` | 断点与响应式规则，站点不重复写 |
 
@@ -175,7 +175,7 @@ validateContent({
 
 | 组件 | 说明 |
 | --- | --- |
-| `Layout.astro` | 页面外壳：head 元信息、canonical、hreflang、顶栏、页脚、主题内联脚本、`initSite()`。站点全部页面套这一层，不重写 |
+| `Layout.astro` | 页面外壳：head 元信息、canonical、hreflang、站群带、顶栏、页脚、主题内联脚本、`initSite()`。站点全部页面套这一层，不重写 |
 | `PageHead.astro` | 页头：眉题、标题、导语、备注、元信息 |
 | `SectionHead.astro` | 区块标题 |
 
@@ -200,6 +200,20 @@ validateContent({
 | `Icon.astro` / `glyphs.mjs` | 内联 SVG 图标，无外部图标库 |
 
 `Layout` 的 props：`site`、`lang`、`ui`、`path`、`title`、`description`、`active`、`nav`、`progress`、`noindex`、`jsonLd`。
+
+## 站群互链
+
+分站与门户互相认得对方，靠三处，都不需要站点各写一遍：
+
+| 位置 | 谁给 | 指向 |
+| --- | --- | --- |
+| 站群带（`.netbar`，页顶细带） | `Layout` 自动渲染 | `site.portal`，英文页去 `/en/` |
+| 页脚「站群」栏 | `Layout` 自动渲染 | 同上 |
+| 结构化数据 `isPartOf` | 站点在 `jsonLd` 里写 | 分站 `WebSite` → 门户 `WebSite`，用 `@id` 串起来 |
+
+站群带存在的理由：搜索引擎常把人直接送到分站内页，读者从那里进来时看不到门户，页脚又太靠下。带子在顶栏之上、不吸顶，滚过即让位。
+
+站点常量里要有 `portal`、`portalName`、`portalNameEn`——`Layout` 靠它们生成回链。
 
 ## 站点怎么用
 

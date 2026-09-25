@@ -95,6 +95,40 @@ svg { display: block; }
 }
 .skip-link:focus { transform: translate(-50%, 0); }
 
+/* ---------- 站群带 ----------
+   分站是站群的一部分，页顶留一条细带指回门户。搜索引擎常把人直接送到
+   分站内页，读者从那里进来时得知道自己在哪、怎么回总入口。 */
+
+.netbar {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: .04em;
+}
+
+.netbar__inner {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.netbar__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color .18s var(--ease-soft);
+}
+.netbar__back:hover { color: var(--brand); }
+.netbar__arrow {
+  font-family: var(--font-sans);
+  transition: transform .24s var(--ease);
+}
+.netbar__back:hover .netbar__arrow { transform: translateX(-2px); }
+
 /* ---------- 顶栏 ---------- */
 
 .topbar {

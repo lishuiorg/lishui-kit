@@ -35,7 +35,7 @@
 }
 
 @media print {
-  .topbar, .hero__scroll, .hero__seal, .footer__grid > :not(:first-child) { display: none; }
+  .topbar, .netbar, .hero__scroll, .hero__seal, .footer__grid > :not(:first-child) { display: none; }
   body::after { display: none; }
   .hero__bg { display: none; }
 }
