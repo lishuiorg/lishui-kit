@@ -286,6 +286,18 @@
   border-color: var(--brand);
   color: #FFFFFF;
 }
+/* 分面计数：由脚本填；计数为 0 的项压暗，但仍可点（取消选中时用得到） */
+.chipbtn__n {
+  margin-left: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-4);
+}
+.chipbtn__n:empty { display: none; }
+.chipbtn[aria-pressed="true"] .chipbtn__n { color: rgba(255, 255, 255, .72); }
+.chipbtn[data-empty="true"] { opacity: .5; }
+.chipbtn[data-empty="true"]:hover { opacity: 1; }
 .filters__foot {
   display: flex;
   flex-wrap: wrap;
@@ -904,6 +916,61 @@
   font-size: var(--t-xs);
   letter-spacing: .14em;
   color: var(--gold);
+}
+
+/* ---------- 分页 ---------- */
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.pager__info {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  letter-spacing: .06em;
+  color: var(--ink-4);
+  font-variant-numeric: tabular-nums;
+}
+.pager__pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+.pagebtn {
+  min-width: 34px;
+  padding: 5px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color .18s var(--ease-soft), background-color .18s var(--ease-soft), color .18s var(--ease-soft);
+}
+.pagebtn:hover:not(:disabled):not([aria-current="page"]) { border-color: var(--brand); color: var(--brand-ink); }
+.pagebtn[aria-current="page"] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #FFFFFF;
+  cursor: default;
+}
+.pagebtn:disabled { opacity: .42; cursor: default; }
+.pagebtn--gap {
+  min-width: auto;
+  padding: 5px 2px;
+  border-color: transparent;
+  background: none;
+  color: var(--ink-4);
+  cursor: default;
 }
 
 /* ---------- 关于页 / 通用长文 ---------- */

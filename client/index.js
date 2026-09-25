@@ -103,7 +103,8 @@ export function initProgress() {
   paint();
 }
 
-/** 语言切换：把当前 #hash 附到另一种语言的链接上，切换后停在同一条目。 */
+/** 语言切换：把当前 #hash 附到另一种语言的链接上，切换后停在同一条目。
+    筛选与分页改地址时不触发 hashchange，故另听一个 lishui:urlchange（见 client/filter.js）。 */
 export function initLangSwitch() {
   const links = [...document.querySelectorAll('[data-lang-switch]')];
   if (!links.length) return;
@@ -116,6 +117,7 @@ export function initLangSwitch() {
   };
   syncHash();
   window.addEventListener('hashchange', syncHash);
+  window.addEventListener('lishui:urlchange', syncHash);
 }
 
 /** 页脚年份。 */

@@ -11,11 +11,19 @@ const ordinal = (n) => {
 };
 
 export function yearPhrase(n, precision, approx, lang) {
+  const ap = approx ? (lang === 'zh' ? '约 ' : 'c. ') : '';
   if (n < 0) {
     const v = Math.abs(n);
-    return lang === 'zh' ? `距今约 ${v} 年` : `c. ${v} years ago`;
+    if (precision === 'century') {
+      const c = Math.ceil(v / 100);
+      return lang === 'zh' ? `${ap}公元前 ${c} 世纪` : `${ap}the ${ordinal(c)} century BCE`;
+    }
+    if (precision === 'decade') {
+      const d = Math.floor(v / 10) * 10;
+      return lang === 'zh' ? `${ap}公元前 ${d} 年代` : `${ap}the ${d}s BCE`;
+    }
+    return lang === 'zh' ? `${ap}公元前 ${v} 年` : `${ap}${v} BCE`;
   }
-  const ap = approx ? (lang === 'zh' ? '约 ' : 'c. ') : '';
   if (precision === 'decade') {
     const d = Math.floor(n / 10) * 10;
     return lang === 'zh' ? `${ap}${d} 年代` : `${ap}the ${d}s`;
@@ -47,7 +55,8 @@ export function axisYear(entry, { lang, gloss }) {
   }
   if (t.start < 0) {
     const v = Math.abs(t.start);
-    return { main: lang === 'zh' ? `约 ${v} 年前` : `c. ${v} BP`, sub: '' };
+    const ap = t.approx ? (lang === 'zh' ? '约 ' : 'c. ') : '';
+    return { main: lang === 'zh' ? `${ap}前 ${v}` : `${ap}${v} BCE`, sub: '' };
   }
   const ap = t.approx ? (lang === 'zh' ? '约 ' : 'c. ') : '';
   return { main: `${ap}${t.start}`, sub: t.dynasty ? gloss(t.dynasty, lang) : '' };

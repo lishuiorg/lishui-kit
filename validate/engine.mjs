@@ -75,6 +75,7 @@ export function validateContent({
     warn('schema/terms.en.json', '未找到枚举英文对照表，英文页的枚举取值可能漏出中文');
   }
   const flatTerms = flattenTerms(terms);
+  const eraRoots = Object.keys(terms.eraRoot || {});
   const allowedTags = new Set(Object.values(tagsFile.tags).flat());
   const glossary = readCsv(join(repo, 'glossary.csv'))
     .slice(1)
@@ -88,6 +89,8 @@ export function validateContent({
   /* --- 词表覆盖：取值表里的中文取值必须能翻成英文 --- */
 
   const translatable = (zh) => glossaryZh.has(zh) || flatTerms[zh] !== undefined;
+  /* 年号通用式：纪年串里含任一年号词根即视为可译（glossary.csv「年号通用式」规则）。 */
+  const eraTranslatable = (v) => translatable(v) || eraRoots.some((r) => v.includes(r));
   const enumValues = [
     ...(enums.placeType || []), ...(enums.genre || []), ...(enums.protectionLevel || []),
     ...(enums.dynasty || []), ...allowedTags,
@@ -220,10 +223,10 @@ export function validateContent({
           err(f, `${k} 中不应出现中文字符（英文稿的展示字段需完整英译）`);
         }
       }
-      /* era 是中英共用字段：要么已英译，要么能查到译法，否则英文页会漏出中文。 */
+      /* era 是中英共用字段：要么已英译，要么能查到译法（含年号通用式），否则英文页会漏出中文。 */
       for (const v of [d.era, d.time?.era]) {
-        if (typeof v === 'string' && v && CJK.test(v) && !translatable(v)) {
-          err(f, `era「${v}」既非英文也无译法（补 glossary.csv 或 terms.en.json）`);
+        if (typeof v === 'string' && v && CJK.test(v) && !eraTranslatable(v)) {
+          err(f, `era「${v}」既非英文也无译法（补 glossary.csv、terms.en.json 的年号词根，或改写为英文）`);
         }
       }
       /* 枚举取值同理：古迹类型、体裁、文保级别、朝代都要能翻。 */

@@ -11,7 +11,7 @@
 | 目录 | 放什么 | 认框架吗 |
 | --- | --- | --- |
 | `styles/` | 设计系统：色板与明暗令牌、基础排版、知识组件样式、响应式 | 否，纯 CSS |
-| `client/` | 界面脚本：主题、滚动入场、阅读进度、筛选与查找、语言切换保位 | 否，原生 JS |
+| `client/` | 界面脚本：主题、滚动入场、阅读进度、筛选查找与分页、语言切换保位 | 否，原生 JS |
 | `content/` | front-matter 解析、来源层与成果层装载、条目派生助手 | 否 |
 | `i18n/` | 路径规则、专名与枚举译法、年代表述、渲染上下文 | 否 |
 | `validate/` | 内容校验引擎、产物链接自检、产物页面自检 | 否 |
@@ -54,8 +54,8 @@ initSite();   // 主题 + 滚动入场 + 阅读进度 + 语言切换保位 + 页
 | `initTheme()` / `applyTheme(theme, persist)` | 明暗切换。默认跟随系统，用户手动选过就写 `localStorage['lishui-theme']` |
 | `initReveal()` | 滚动入场，尊重 `prefers-reduced-motion`；脚本不可用时内容照常显示 |
 | `initProgress()` | 正文页阅读进度条，取 `[data-progress]` |
-| `initLangSwitch()` | 语言切换时把当前 `#hash` 带到另一种语言的链接上，**不跳回首页** |
-| `initFilters()` | 列表页 / 时间轴 / 索引页共用的筛选与查找 |
+| `initLangSwitch()` | 语言切换时把当前 `#hash` 带到另一种语言的链接上，**不跳回首页**；筛选与翻页改地址时另听 `lishui:urlchange` |
+| `initFilters()` | 列表页 / 时间轴 / 索引页共用的筛选、查找与分页 |
 | `initHomeSearch()` | 首页查找框：把关键词带到目标页的 `#q=` |
 | `initKnowledgePage()` | 知识页的组合初始化 |
 
@@ -64,12 +64,20 @@ initSite();   // 主题 + 滚动入场 + 阅读进度 + 语言切换保位 + 页
 | 约定 | 标记 |
 | --- | --- |
 | 表单 / 输入框 | `[data-filterform]`、`[data-search-input]` |
-| 筛选按钮 | `.chipbtn[data-filter="组:值"]` |
+| 筛选按钮 | `.chipbtn[data-filter="组:值"]`，另带 `data-label`（纯界面文字）与 `[data-chip-count]`（分面计数） |
 | 条目 | `[data-searchable]`，另带 `data-search-text` 与 `data-<组>` |
 | 分组 | `[data-search-group]`，内含 `[data-group-count][data-unit]` |
+| 分页 | `[data-pager]`，内含 `[data-pager-info][data-pager-pages]`，页大小由 `data-page-size` 给 |
 | 状态 / 空结果 / 清除 | `[data-filterstate]`、`[data-noresult]`、`[data-filter-clear]` |
 
-地址栏 `#q=` `#category=` `#dynasty=` `#town=` `#tag=` 可恢复筛选状态，链接可直接分享。
+分面计数与分页都只在已生成的页面上算，不预生成数据：
+
+- **分面计数**——每个筛选按钮右侧显示「若选这一项」的命中数（其余筛选与关键词照旧），计数为 0 的压暗但仍可点；
+- **分页**——只有放了 `[data-pager]` 的页面分页；条目数不超过一页时分页条自动隐藏。**时间轴与索引页不要放**：它们按期分组、要一次看全，分期计数也只该算全量而非当页。
+
+地址栏 `#q=` `#category=` `#dynasty=` `#town=` `#tag=` `#page=` 可恢复筛选与页码。用户改动筛选或翻页后，脚本把这份状态用 `replaceState` 写回地址栏（不产生历史记录，也不吞掉页内锚点），语言切换按钮因此能把筛选与页码一并带过去。
+
+分页算式（`pageCount` / `clampPage` / `pageRange` / `pageWindow`）在 `client/paging.js`，是纯函数，不碰 DOM，可单独验算。
 
 ## content/ · 内容装载
 
@@ -178,7 +186,8 @@ validateContent({
 | `EntryCard.astro` | `entry`、`ctx` |
 | `CardGrid.astro` | `entries`、`ctx`、`noresult`、`empty` |
 | `CategoryGrid.astro` | `items`（每项 `{ href, glyph, name, alt, desc, count, countUnit, browseAll, empty }`） |
-| `FilterForm.astro` | `ui`、`groups`、`search` |
+| `FilterForm.astro` | `ui`、`groups`、`search`；按钮自带分面计数占位 |
+| `Pagination.astro` | `ui`、`pageSize`；**只放列表页**，时间轴与索引页不放 |
 | `InfoCard.astro` | `entry`、`ctx`，详情页侧栏的结构化元信息 |
 | `TocNav.astro` | `entry`、`ctx`，正文目录 |
 | `SourcesBlock.astro` | `entry`、`ctx`，来源与授权 |

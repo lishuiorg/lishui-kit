@@ -1,0 +1,21 @@
+---
+/* 分页条：列表页条目多时按页显示，页码由 client/filter.js 在已生成的页面上填。
+   pageSize 经 data-page-size 交给脚本；文案经 data-* 交出去，脚本不内置任何界面串。
+   脚本不在或只有一页时整条不显示（hidden），条目照旧一次列全。
+   只用于列表页：时间轴与索引页按期分组、要一次看全，不分页。 */
+const { ui, pageSize = 24 } = Astro.props;
+---
+<nav
+  class="pager"
+  data-pager
+  data-page-size={pageSize}
+  data-info-template={ui.list.pagerInfo}
+  data-prev-label={ui.list.pagerPrev}
+  data-next-label={ui.list.pagerNext}
+  data-page-label={ui.list.pagerPage}
+  aria-label={ui.list.pager}
+  hidden
+>
+  <p class="pager__info" data-pager-info aria-live="polite"></p>
+  <div class="pager__pages" data-pager-pages></div>
+</nav>
