@@ -129,6 +129,32 @@ svg { display: block; }
 }
 .netbar__back:hover .netbar__arrow { transform: translateX(-2px); }
 
+/* 带子右侧是站群切换：门户列全部已上线分站，分站列兄弟站并把本站标出来。
+   门户与分站共用这一套类名，两边的观感才对得上。 */
+.netbar__sites {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.netbar__site {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color .18s var(--ease-soft);
+}
+.netbar__site:hover { color: var(--brand); }
+.netbar__site--here { color: var(--ink-2); }
+.netbar__dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
 /* ---------- 顶栏 ---------- */
 
 .topbar {

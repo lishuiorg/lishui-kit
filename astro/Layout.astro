@@ -12,6 +12,7 @@
  */
 import '../styles/index.css';
 import { altPath, sectionPath } from '../i18n/paths.mjs';
+import { networkNav } from '../sites.mjs';
 import Icon from './Icon.astro';
 
 const {
@@ -32,6 +33,10 @@ const homePath = sectionPath('home', lang);
 const portalPath = `${site.portal}${lang === 'en' ? '/en/' : '/'}`;
 const footerNav = nav.filter((item) => item.section !== 'home');
 const jsonLdText = jsonLd ? JSON.stringify(jsonLd, null, 2) : '';
+/* 站群带：门户那头的分站清单由 sites.json 给出，本站不硬编码兄弟站点。
+   当前站按 host 认出，在带子里标成「你在这」，不给自己一个返回自己的链接。 */
+const network = networkNav({ lang, host: site.host });
+const networkOthers = network.filter((item) => !item.current);
 ---
 
 <!DOCTYPE html>
@@ -98,6 +103,13 @@ const jsonLdText = jsonLd ? JSON.stringify(jsonLd, null, 2) : '';
       <span class="netbar__arrow" aria-hidden="true">←</span>
       <span>{lang === 'zh' ? site.portalName : site.portalNameEn}</span>
     </a>
+    <span class="netbar__sites" aria-label={lang === 'zh' ? '分站导航' : 'Sub-sites'}>
+      {network.map((item) => (item.current ? (
+        <span class="netbar__site netbar__site--here" aria-current="true">{item.name}</span>
+      ) : (
+        <a class="netbar__site" href={item.url}>{item.name}<span class="netbar__dot" aria-hidden="true"></span></a>
+      )))}
+    </span>
   </div>
 </div>
 
@@ -151,6 +163,7 @@ const jsonLdText = jsonLd ? JSON.stringify(jsonLd, null, 2) : '';
     <div class="footer__links">
       <h4>{lang === 'zh' ? '站群' : 'Network'}</h4>
       <a href={portalPath}>{lang === 'zh' ? site.portalName : site.portalNameEn}</a>
+      {networkOthers.map((item) => <a href={item.url}>{item.name}</a>)}
     </div>
   </div>
   <div class="wrap footer__bottom">
