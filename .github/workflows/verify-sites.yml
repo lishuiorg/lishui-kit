@@ -1,0 +1,112 @@
+name: 底座回归（全部在线站）
+
+# 底座是三站共用的一层，改一行没有任何东西会告诉你哪个站被改坏——本工作流就是那张网：
+# 把当前 status: live 的分站全部构建一遍，站群清单从门户的 sites.json 现取。
+#
+# 新站上线只需把 sites.json 里的 status 改成 live，本工作流一行都不用动，
+# 新站自动纳入覆盖。分站越加越多时，这是唯一能挡住「底座改动静默改坏某个站」的机制。
+#
+# 只跑在线站：building 与 planned 的站点库还不存在，取来只会检出失败。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      sites: ${{ steps.read.outputs.sites }}
+    steps:
+      - name: 检出底座
+        uses: actions/checkout@v4
+        with:
+          path: lishui-kit
+
+      - name: 检出站群清单
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/site-portal
+          path: site-portal
+          sparse-checkout: sites.json
+          sparse-checkout-cone-mode: false
+
+      - name: 取当前在线分站
+        id: read
+        run: echo "sites=$(node lishui-kit/scripts/live-sites.mjs site-portal/sites.json)" >> "$GITHUB_OUTPUT"
+
+      - name: 报告覆盖范围
+        run: echo "本次回归覆盖：${{ steps.read.outputs.sites }}"
+
+  verify:
+    needs: plan
+    if: needs.plan.outputs.sites != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        site: ${{ fromJSON(needs.plan.outputs.sites) }}
+    name: ${{ matrix.site.repo }}
+    steps:
+      # 站点库以 file:../lishui-kit 引入底座，构建时又要读内容库，
+      # 所以四个库都要检出，并保持同级目录关系。
+      - name: 检出站点库
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/${{ matrix.site.repo }}
+          path: ${{ matrix.site.repo }}
+
+      - name: 检出共享底座
+        uses: actions/checkout@v4
+        with:
+          path: lishui-kit
+
+      # 与站点发布工作流不同，这里不稀疏检出：本工作流要验的就是全部站点，
+      # 逐站再各拉一次子树反而多拉几遍。内容库总共几百个 markdown，一次拉全更省。
+      - name: 检出内容库
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/lishui
+          path: lishui
+
+      - name: 检出站群清单
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/site-portal
+          path: site-portal
+          sparse-checkout: sites.json
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            ${{ matrix.site.repo }}/package-lock.json
+            lishui-kit/package-lock.json
+            lishui/package-lock.json
+
+      # 底座自己的依赖也要装：它以 file: 链接进 node_modules，
+      # 而 Node 按链接的真实路径解析依赖，找不到就得往底座目录里找。
+      - name: 安装底座依赖
+        working-directory: lishui-kit
+        run: npm ci
+
+      - name: 安装依赖
+        working-directory: ${{ matrix.site.repo }}
+        run: npm ci
+
+      # 内容库的校验脚本要能解析到 lishui-kit，所以它也得装一次依赖。
+      - name: 安装内容库依赖
+        working-directory: lishui
+        run: npm ci
+
+      # 内容校验 → 构建 → 站内链接自检 → 页面自检，与发布走的是同一条命令。
+      - name: 内容校验、构建与自检
+        working-directory: ${{ matrix.site.repo }}
+        run: npm run check
