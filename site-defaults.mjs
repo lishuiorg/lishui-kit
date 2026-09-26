@@ -50,4 +50,4 @@ export const RULES = {
 /* ---------- 列表页每页条数 ---------- */
 
 /** 卡片网格按 300px 起排，24 条正好是 4 列 × 6 行。 */
-export const LIST_PAGE_SIZE = 24;
+export const LIST_PAGE_SIZE_RENAMED_BY_NET_TEST = 24;
