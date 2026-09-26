@@ -1,0 +1,59 @@
+{
+  "$comment": "站群三库逐字相同的取值表，正式版本由共享底座维护。其余七项取值本身即英文 slug，其英文标签不在本文件：precision／depth／confidence／rights 的标签在 lishui-kit/i18n/ui-default.mjs，archive 的标签在 lishui-kit/site-defaults.mjs，sourceType 与 status 不直接渲染（status 是入库状态，只在校验里用）。dynasty 取值是中文，英文译法在 glossary.csv（原 en.dynasty 与 glossary 重复，已删，避免同一中文词住在两张表里、其中一张不生效）。",
+  "dynasty": [
+    "隋",
+    "唐",
+    "宋",
+    "元",
+    "明",
+    "清",
+    "民国",
+    "当代"
+  ],
+  "precision": [
+    "year",
+    "decade",
+    "century",
+    "unknown"
+  ],
+  "depth": [
+    "stub",
+    "standard",
+    "full"
+  ],
+  "status": [
+    "draft",
+    "review",
+    "published"
+  ],
+  "confidence": [
+    "high",
+    "medium",
+    "low"
+  ],
+  "rights": [
+    "public-domain",
+    "gov-open",
+    "excerpt-only",
+    "link-only",
+    "permission-required"
+  ],
+  "archive": [
+    "fulltext",
+    "link-registered",
+    "catalogued-only",
+    "excerpt",
+    "link"
+  ],
+  "sourceType": [
+    "gazetteer",
+    "epigraphy",
+    "archive",
+    "gov",
+    "heritage-list",
+    "academic",
+    "media",
+    "fieldwork"
+  ],
+  "sourceIdPattern": "^src:[a-z0-9]+(-[a-z0-9]+)*$"
+}
