@@ -1,0 +1,46 @@
+---
+/* 索引页：全部条目分组总览，供「有没有写」的快速核对。
+   分组维度与列由站点给（历史按年代分期、文化与街镇按类别），模板共用。
+   类别筛选组按「本站类别表里真有条目的那几类」出，三站同一算式，故留在模板里。 */
+import Base from '../layouts/Base.astro';
+import PageHead from '../PageHead.astro';
+import FilterForm from '../FilterForm.astro';
+import IndexTable from '../IndexTable.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+
+const { ctx, lang, groups, columns, total } = Astro.props;
+const { ui, categories } = ctx;
+
+const cats = (categories || []).filter(
+  (cat) => groups.some((group) => group.items.some((entry) => entry.category === cat.key)),
+);
+
+const filterGroups = cats.length > 0 ? [{
+  key: 'category',
+  label: ui.list.filterCategory,
+  options: cats.map((cat) => ({ value: cat.key, label: ctx.catName(cat) })),
+}] : [];
+---
+
+<Base
+  ctx={ctx}
+  lang={lang}
+  path={sectionPath('index', lang)}
+  title={ui.indexPage.title}
+  description={ui.indexPage.lede}
+  active="index"
+>
+  <PageHead
+    eyebrow={ui.nav.index}
+    title={ui.indexPage.title}
+    lede={ui.indexPage.lede}
+    meta={[{ label: ui.stats.entries, value: total }]}
+  />
+
+  <section class="section">
+    <div class="wrap">
+      {filterGroups.length > 0 && <FilterForm ui={ui} groups={filterGroups} />}
+      <IndexTable groups={groups} ctx={ctx} columns={columns} />
+    </div>
+  </section>
+</Base>

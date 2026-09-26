@@ -1,0 +1,26 @@
+---
+/* 首页形态之一：中部板块是时间轴。有年代分期的分站用（历史站）。
+   站点只给规模条取哪几项与分期数据，其余（首屏、类别网格、最新更新、凡例）由骨架出；
+   中部板块自带的空白即间隔，故整块交给 slot，不再由骨架补 <p>。 */
+import HomeShell from './HomeShell.astro';
+import SectionHead from '../SectionHead.astro';
+import TimelinePeriods from '../TimelinePeriods.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+
+const { ctx, lang, statItems, rules, periods } = Astro.props;
+const { ui } = ctx;
+---
+
+<HomeShell ctx={ctx} lang={lang} statItems={statItems} rules={rules}>
+  <Fragment slot="middle">
+    <SectionHead eyebrow="Timeline" title={ui.home.timelineTitle} note={ui.home.timelineNote} />
+    <TimelinePeriods
+      periods={periods}
+      ctx={ctx}
+      limit={2}
+      emptyText={ui.timeline.empty}
+      countUnit={ui.list.countUnit}
+    />
+    <p class="morelink"><a class="cat__go" href={sectionPath('timeline', lang)}>{ui.home.timelineOpen}</a></p>
+  </Fragment>
+</HomeShell>

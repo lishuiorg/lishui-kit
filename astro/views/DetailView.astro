@@ -1,0 +1,120 @@
+---
+/* 详情页：条目正文、信息卡、目录、关联、来源。
+   标题下的元信息行、结构化数据里的条目类型、同板块条目的排序都由站点给
+   （各站字段与排序口径不同），模板三站共用。 */
+import Base from '../layouts/Base.astro';
+import InfoCard from '../InfoCard.astro';
+import TocNav from '../TocNav.astro';
+import RelatedNav from '../RelatedNav.astro';
+import SourcesBlock from '../SourcesBlock.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+
+const { ctx, lang, entry, siblings, metaBits, schemaType } = Astro.props;
+const { ui } = ctx;
+
+const section = entry.dirName;
+const at = siblings.findIndex((e) => e.id === entry.id);
+const prev = at > 0 ? siblings[at - 1] : null;
+const next = at >= 0 && at < siblings.length - 1 ? siblings[at + 1] : null;
+
+const flags = ctx.flags(entry);
+const homePath = sectionPath('home', lang);
+const listPath = sectionPath(section, lang);
+---
+
+<Base
+  ctx={ctx}
+  lang={lang}
+  path={entry.path}
+  title={entry.title}
+  description={entry.summary || entry.subtitle || ''}
+  active={section}
+  progress
+  jsonLd={{
+    '@context': 'https://schema.org',
+    '@type': schemaType,
+    name: entry.title,
+    headline: entry.title,
+    description: entry.summary || entry.subtitle || '',
+    inLanguage: lang === 'zh' ? 'zh-Hans' : 'en',
+    url: `${ctx.site.origin}${entry.path}`,
+    dateModified: entry.updated,
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${ctx.site.origin}/#website`,
+      name: lang === 'zh' ? ctx.site.name : ctx.site.nameEn,
+      url: `${ctx.site.origin}${homePath}`,
+      isPartOf: {
+        '@type': 'WebSite',
+        '@id': `${ctx.site.portal}/#website`,
+        name: lang === 'zh' ? ctx.site.portalName : ctx.site.portalNameEn,
+        url: `${ctx.site.portal}${lang === 'en' ? '/en/' : '/'}`,
+      },
+    },
+    citation: (entry.sourcesResolved || []).map((src) => ({
+      '@type': 'CreativeWork',
+      name: lang === 'en' ? (src.titleEn || src.title) : src.title,
+      ...(src.url ? { url: src.url } : {}),
+      ...(src.publisher ? { publisher: src.publisher } : {}),
+    })),
+  }}
+>
+  <article class="entry">
+    <div class="wrap entry__grid">
+      <div class="entry__main">
+        <nav class="crumbs" aria-label={lang === 'zh' ? '面包屑' : 'Breadcrumb'}>
+          <a href={homePath}>{ui.nav.home}</a>
+          <span aria-hidden="true">/</span>
+          <a href={listPath}>{ui.nav[section]}</a>
+          <span aria-hidden="true">/</span>
+          <span>{entry.title}</span>
+        </nav>
+
+        <header class="entry__head">
+          <p class="eyebrow">{ctx.catLabel(entry)} · {ctx.typeLabel(entry)}</p>
+          <h1 class="entry__title">{entry.title}</h1>
+          {entry.subtitle && <p class="entry__sub">{entry.subtitle}</p>}
+          {entry.summary && <p class="entry__summary">{entry.summary}</p>}
+          <p class="entry__meta">
+            {metaBits.map((bit) => <span>{bit}</span>)}
+          </p>
+          {flags.length > 0 && (
+            <p class="entry__meta">
+              {flags.map((flag) => <span class={`flag flag--${flag.level}`}>{flag.text}</span>)}
+            </p>
+          )}
+        </header>
+
+        <div class="entry__body" set:html={entry.html} />
+
+        {(prev || next) && (
+          <nav class="entry__nav" aria-label={lang === 'zh' ? '同板块条目' : 'Entries in this section'}>
+            {prev ? (
+              <a class="entry__nav-link" href={prev.path}>
+                <span class="entry__nav-dir">{lang === 'zh' ? '上一条' : 'Previous'}</span>
+                <span class="entry__nav-title">{prev.title}</span>
+              </a>
+            ) : <span />}
+            {next ? (
+              <a class="entry__nav-link entry__nav-link--next" href={next.path}>
+                <span class="entry__nav-dir">{lang === 'zh' ? '下一条' : 'Next'}</span>
+                <span class="entry__nav-title">{next.title}</span>
+              </a>
+            ) : <span />}
+          </nav>
+        )}
+
+        <p class="entry__license">
+          {ui.detail.license}{entry.verified === false ? ` ${ui.detail.unverified}` : ''}
+        </p>
+      </div>
+
+      <aside class="entry__aside">
+        <InfoCard entry={entry} ctx={ctx} />
+        <TocNav entry={entry} ctx={ctx} />
+        <RelatedNav entry={entry} ctx={ctx} />
+        <SourcesBlock entry={entry} ctx={ctx} />
+      </aside>
+    </div>
+  </article>
+</Base>

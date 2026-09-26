@@ -1,0 +1,113 @@
+---
+/* 首页骨架：首屏、规模、类别网格、中部板块、最新更新、编纂凡例。
+   两种首页形态（时间轴预览 / 板块卡）只在「中部板块」不同，其余逐字相同，
+   故骨架收在这里一份，变体各填一个 slot——kit 里不出现任何站点判断。
+   站点报三件本站特有的事：规模条要哪几项（statItems）、中部板块放什么（slot）、
+   编纂凡例（rules——街镇站第 2、3 条按官方文件口径自写，与另两站不同）。
+   中部 slot 紧贴 wrap 不留空白：slot 自带的空白正好充当间隔，多一处就会多一个空格。 */
+import Base from '../layouts/Base.astro';
+import Hero from '../Hero.astro';
+import StatBar from '../StatBar.astro';
+import SectionHead from '../SectionHead.astro';
+import CategoryGrid from '../CategoryGrid.astro';
+import CardGrid from '../CardGrid.astro';
+import RulesList from '../RulesList.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+import { forLang, byUpdated } from '../../content/load.mjs';
+
+const { ctx, lang, statItems, rules } = Astro.props;
+const { ui, content, categories } = ctx;
+
+const list = forLang(content.entries, lang);
+const latest = [...list].sort(byUpdated).slice(0, 6);
+
+const homePath = sectionPath('home', lang);
+const indexPath = sectionPath('index', lang);
+
+const statBar = statItems.map(({ key, value }) => ({ label: ui.stats[key], value }));
+
+const catItems = categories.map((cat) => {
+  const items = list.filter((entry) => entry.category === cat.key);
+  return {
+    href: `${sectionPath(cat.dirName, lang)}#cat=${cat.key}`,
+    glyph: cat.glyph,
+    name: ctx.catName(cat),
+    alt: cat.key,
+    desc: ctx.catDesc(cat),
+    count: items.length,
+    countUnit: ui.list.countUnit,
+    browseAll: ui.home.browseAll,
+    empty: items.length === 0,
+  };
+});
+---
+
+<Base
+  ctx={ctx}
+  lang={lang}
+  path={homePath}
+  title={ui.hero.title}
+  description={ui.hero.lede}
+  active="home"
+  jsonLd={{
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${ctx.site.origin}/#website`,
+    name: lang === 'zh' ? ctx.site.name : ctx.site.nameEn,
+    url: `${ctx.site.origin}${homePath}`,
+    inLanguage: lang === 'zh' ? 'zh-Hans' : 'en',
+    description: ui.hero.lede,
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${ctx.site.portal}/#website`,
+      name: lang === 'zh' ? ctx.site.portalName : ctx.site.portalNameEn,
+      url: `${ctx.site.portal}${lang === 'en' ? '/en/' : '/'}`,
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${ctx.site.origin}${indexPath}#q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }}
+>
+  <Hero
+    eyebrow={ui.hero.eyebrow}
+    title={ui.hero.title}
+    lede={ui.hero.lede}
+    searchTarget={indexPath}
+    searchPlaceholder={ui.hero.searchPlaceholder}
+    searchLabel={ui.list.search}
+    searchButton={ui.hero.searchButton}
+    hint={ui.hero.searchHint}
+  />
+
+  <section class="section section--tight">
+    <div class="wrap"><StatBar items={statBar} /></div>
+  </section>
+
+  <section class="section section--soft">
+    <div class="wrap">
+      <SectionHead eyebrow="Browse" title={ui.home.categoriesTitle} note={ui.home.categoriesNote} />
+      <CategoryGrid items={catItems} />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap"><slot name="middle" /></div>
+  </section>
+
+  <section class="section section--soft">
+    <div class="wrap">
+      <SectionHead eyebrow="Recent" title={ui.home.latestTitle} note={ui.home.latestNote} />
+      <CardGrid entries={latest} ctx={ctx} />
+      <p class="morelink"><a class="cat__go" href={indexPath}>{ui.home.latestSeeAll}</a></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <SectionHead eyebrow="Editorial rules" title={ui.home.rulesTitle} note={ui.home.rulesNote} />
+      <RulesList items={rules} />
+    </div>
+  </section>
+</Base>

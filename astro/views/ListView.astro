@@ -1,0 +1,75 @@
+---
+/* 列表页：一个板块的条目、筛选、查找与分页。
+   筛选组由站点算好传进来（各站字段不同，取值一律用内容库原始值），模板三站共用。
+   筛选、查找与分页都在已生成的页面上跑，靠 data-* 属性与 kit 的 client/filter.js，
+   不生成第二份数据文件。分页只在此处放分页条：时间轴与索引页按期分组，要一次看全。 */
+import Base from '../layouts/Base.astro';
+import PageHead from '../PageHead.astro';
+import FilterForm from '../FilterForm.astro';
+import CardGrid from '../CardGrid.astro';
+import Pagination from '../Pagination.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+import { LIST_PAGE_SIZE } from '../../site-defaults.mjs';
+
+const { ctx, lang, section, entries, groups, text } = Astro.props;
+const { ui } = ctx;
+
+const homePath = sectionPath('home', lang);
+const path = sectionPath(section, lang);
+
+const updated = entries.map((e) => e.updated).filter(Boolean).sort().pop() || '';
+const meta = [
+  { label: ui.stats.entries, value: entries.length },
+  ...(updated ? [{ label: ui.footer.updated, value: updated }] : []),
+];
+---
+
+<Base
+  ctx={ctx}
+  lang={lang}
+  path={path}
+  title={text.title}
+  description={text.lede}
+  active={section}
+  jsonLd={{
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: text.title,
+    description: text.lede,
+    inLanguage: lang === 'zh' ? 'zh-Hans' : 'en',
+    url: `${ctx.site.origin}${path}`,
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${ctx.site.origin}/#website`,
+      name: lang === 'zh' ? ctx.site.name : ctx.site.nameEn,
+      url: `${ctx.site.origin}${homePath}`,
+      isPartOf: {
+        '@type': 'WebSite',
+        '@id': `${ctx.site.portal}/#website`,
+        name: lang === 'zh' ? ctx.site.portalName : ctx.site.portalNameEn,
+        url: `${ctx.site.portal}${lang === 'en' ? '/en/' : '/'}`,
+      },
+    },
+    hasPart: entries.map((entry) => ({
+      '@type': entry.type === 'place' ? 'Place' : 'CreativeWork',
+      name: entry.title,
+      url: `${ctx.site.origin}${entry.path}`,
+    })),
+  }}
+>
+  <PageHead
+    eyebrow={ui.nav[section]}
+    title={text.title}
+    lede={text.lede}
+    note={text.note}
+    meta={meta}
+  />
+
+  <section class="section">
+    <div class="wrap">
+      {groups.length > 0 && <FilterForm ui={ui} groups={groups} />}
+      <CardGrid entries={entries} ctx={ctx} noresult={ui.list.noresult} empty={ui.list.empty} />
+      {entries.length > LIST_PAGE_SIZE && <Pagination ui={ui} pageSize={LIST_PAGE_SIZE} />}
+    </div>
+  </section>
+</Base>

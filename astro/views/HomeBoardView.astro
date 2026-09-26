@@ -1,0 +1,17 @@
+---
+/* 首页形态之二：中部板块是板块卡。不按年代分期的分站用（文化站、街镇站）。
+   板块卡由站点算好传进来：板块名取自本站导航串，说明取自本站板块表。 */
+import HomeShell from './HomeShell.astro';
+import SectionHead from '../SectionHead.astro';
+import CategoryGrid from '../CategoryGrid.astro';
+
+const { ctx, lang, statItems, rules, boardItems } = Astro.props;
+const { ui } = ctx;
+---
+
+<HomeShell ctx={ctx} lang={lang} statItems={statItems} rules={rules}>
+  <Fragment slot="middle">
+    <SectionHead eyebrow="Sections" title={ui.home.sectionsTitle} note={ui.home.sectionsNote} />
+    <CategoryGrid items={boardItems} />
+  </Fragment>
+</HomeShell>

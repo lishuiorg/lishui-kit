@@ -1,0 +1,121 @@
+---
+/* 关于页：内容范围、来源策略、（可选的已知缺口）、许可、双语与主题、纠错、门禁、
+   技术说明、当前规模。规模数字由构建时统计，不手工维护。
+   两栏各放哪几节、按什么顺序，由站点给：历史站与文化站把「许可」放左栏，
+   街镇站另有「已知缺口」且「许可」在右栏。规模条取哪几项同样由站点给。
+   四张统计表三站同一算式，留在模板里。 */
+import Base from '../layouts/Base.astro';
+import PageHead from '../PageHead.astro';
+import StatBar from '../StatBar.astro';
+import SectionHead from '../SectionHead.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+import { forLang, ofSection } from '../../content/load.mjs';
+import { ARCHIVE } from '../../site-defaults.mjs';
+
+const { ctx, lang, statItems, columns } = Astro.props;
+const { ui, content, categories } = ctx;
+const a = ui.about;
+
+const list = forLang(content.entries, lang);
+const statBar = statItems.map(({ key, value }) => ({ label: ui.stats[key], value }));
+
+const rightsRows = Object.keys(ui.rights)
+  .filter((rights) => rights !== 'unknown')
+  .map((rights) => [ctx.rightsLabel(rights), content.sourcesAll.filter((s) => s.rights === rights).length])
+  .filter(([, n]) => n > 0);
+
+const archiveRows = Object.entries(ARCHIVE[lang])
+  .map(([key, label]) => [label, content.sourcesAll.filter((s) => s.archive === key).length])
+  .filter(([, n]) => n > 0);
+
+const sectionRows = Object.keys(content.typeDirs).map((dir) => [
+  ui.nav[dir], ofSection(content.entries, lang, dir).length,
+]);
+
+const catRows = categories
+  .map((cat) => [ctx.catName(cat), list.filter((e) => e.category === cat.key).length])
+  .filter(([, n]) => n > 0);
+
+const tables = [
+  { title: a.sectionsTitle, head: [a.sectionsHead, ui.stats.entries], rows: sectionRows },
+  { title: a.catStatsTitle, head: [a.categoriesHead, ui.stats.entries], rows: catRows },
+  { title: a.rightsTitle, head: [a.rightsHead, ui.stats.sources], rows: rightsRows },
+  { title: a.archiveTitle, head: [a.archiveHead, ui.stats.sources], rows: archiveRows },
+];
+---
+
+<Base
+  ctx={ctx}
+  lang={lang}
+  path={sectionPath('about', lang)}
+  title={a.title}
+  description={a.lede}
+  active="about"
+  jsonLd={{
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: a.title,
+    description: a.lede,
+    inLanguage: lang === 'zh' ? 'zh-Hans' : 'en',
+    url: `${ctx.site.origin}${sectionPath('about', lang)}`,
+    isPartOf: {
+      '@type': 'WebSite',
+      '@id': `${ctx.site.origin}/#website`,
+      name: lang === 'zh' ? ctx.site.name : ctx.site.nameEn,
+      url: `${ctx.site.origin}${sectionPath('home', lang)}`,
+      isPartOf: {
+        '@type': 'WebSite',
+        '@id': `${ctx.site.portal}/#website`,
+        name: lang === 'zh' ? ctx.site.portalName : ctx.site.portalNameEn,
+        url: `${ctx.site.portal}${lang === 'en' ? '/en/' : '/'}`,
+      },
+    },
+  }}
+>
+  <PageHead
+    eyebrow={ui.nav.about}
+    title={a.title}
+    lede={a.lede}
+    meta={[
+      { label: ctx.site.host },
+      { label: lang === 'zh' ? ctx.site.portalName : ctx.site.portalNameEn, href: `${ctx.site.portal}${lang === 'en' ? '/en/' : '/'}` },
+    ]}
+  />
+
+  <section class="section">
+    <div class="wrap about__grid">
+      <div class="prose">{columns.left.map((key) => (
+        <Fragment> <h2>{a[`${key}Title`]}</h2> <p>{a[`${key}Body`]}</p></Fragment>
+      ))}
+      </div>
+      <div class="prose">{columns.right.map((key) => (
+        <Fragment> <h2>{a[`${key}Title`]}</h2> <p>{a[`${key}Body`]}</p></Fragment>
+      ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--soft">
+    <div class="wrap">
+      <SectionHead eyebrow="Numbers" title={a.statsTitle} note={a.statsNote} />
+      <StatBar items={statBar} />
+      <div class="prose">
+        {tables.map((table) => (
+          <>
+            <h2>{table.title}</h2>
+            <table>
+              <thead>
+                <tr><th>{table.head[0]}</th><th>{table.head[1]}</th></tr>
+              </thead>
+              <tbody>
+                {table.rows.map((row) => (
+                  <tr><td>{row[0]}</td><td>{row[1]}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
