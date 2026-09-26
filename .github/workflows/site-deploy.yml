@@ -1,0 +1,140 @@
+name: 分站构建并发布
+
+# 可复用工作流：站点库的 deploy.yml 只填两个参数，构建与发布逻辑集中在这里，
+# 三站不再各存一份 105 行、只差站名的副本。
+#
+# 调用方（站点库 .github/workflows/deploy.yml）：
+#   jobs:
+#     deploy:
+#       uses: lishuiorg/lishui-kit/.github/workflows/site-deploy.yml@main
+#       with:
+#         site: site-lishi
+#         siteId: lishui-history
+#
+# 内容库已合为单库，仓库名与检出目录名都是站群常量，故不再由各站传入：
+# 各站只报自己的内容侧 siteId，用于稀疏检出本站子树。
+
+on:
+  workflow_call:
+    inputs:
+      site:
+        description: 站点库名，同时也是检出目录名，如 site-lishi
+        required: true
+        type: string
+      siteId:
+        description: 本站内容侧 siteId，即内容库 content/<siteId>/ 子树名，如 lishui-history
+        required: true
+        type: string
+      contentRepo:
+        description: 内容库仓库名。站群内容已合为单库，一般无需覆盖
+        required: false
+        type: string
+        default: lishui
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 站点库以 file:../lishui-kit 引入底座，构建时又要读内容库，
+      # 所以三个库都要检出，并保持同级目录关系。
+      - name: 检出站点库
+        uses: actions/checkout@v4
+        with:
+          path: ${{ inputs.site }}
+
+      - name: 检出共享底座
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/lishui-kit
+          path: lishui-kit
+
+      # 内容库合库后按站分区，而每站只读自己那一棵子树。稀疏检出把内容库
+      # 收窄到本站子树 + 共享来源层 + 取值表 + 校验脚本，避免为构建一个站
+      # 拉下全部 11 个站的 markdown 与全部 fulltext/ 影印文本。
+      # 少检了会直接构建失败（读不到内容或取值表），不会静默出错。
+      - name: 检出内容库
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/${{ inputs.contentRepo }}
+          path: lishui
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            schema/
+            sources/
+            scripts/
+            content/${{ inputs.siteId }}/
+            content/en/${{ inputs.siteId }}/
+          sparse-checkout-cone-mode: false
+
+      # 站群清单由门户持有，取它生成跨站统一导航，本站不硬编码兄弟站点。
+      # 只要 sites.json 一个文件，不必把整个门户检出到构建目录里。
+      - name: 检出站群清单
+        uses: actions/checkout@v4
+        with:
+          repository: lishuiorg/site-portal
+          path: site-portal
+          sparse-checkout: sites.json
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            ${{ inputs.site }}/package-lock.json
+            lishui-kit/package-lock.json
+            lishui/package-lock.json
+
+      # 底座自己的依赖也要装：它以 file: 链接进 node_modules，
+      # 而 Node 按链接的真实路径解析依赖，找不到就得往底座目录里找。
+      - name: 安装底座依赖
+        working-directory: lishui-kit
+        run: npm ci
+
+      - name: 安装依赖
+        working-directory: ${{ inputs.site }}
+        run: npm ci
+
+      # 内容库的校验脚本要能解析到 lishui-kit，所以它也得装一次依赖。
+      - name: 安装内容库依赖
+        working-directory: lishui
+        run: npm ci
+
+      # 内容不过校验就不发布：这一步挡住的是「内容出错」，不是「代码出错」。
+      - name: 内容校验
+        working-directory: ${{ inputs.site }}
+        run: npm run validate
+
+      - name: 构建
+        working-directory: ${{ inputs.site }}
+        run: npm run build
+
+      - name: 站内链接自检
+        working-directory: ${{ inputs.site }}
+        run: npm run check-links
+
+      - name: 页面自检
+        working-directory: ${{ inputs.site }}
+        run: npm run check-pages
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ inputs.site }}/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

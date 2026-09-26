@@ -1,0 +1,27 @@
+---
+/* 404 页：中英各一份。GitHub Pages 只用根路径的 404.html 兜底，
+   /en/404/ 供英文读者直接访问；两份都不进索引，canonical 指回各自首页。 */
+import Base from '../layouts/Base.astro';
+import { sectionPath } from '../../i18n/paths.mjs';
+
+const { ctx, lang } = Astro.props;
+const { ui } = ctx;
+---
+
+<Base
+  ctx={ctx}
+  lang={lang}
+  path={sectionPath('home', lang)}
+  title={ui.notFound.title}
+  description={ui.notFound.lede}
+  noindex
+>
+  <section class="wrap nf">
+    <div>
+      <p class="nf__code">404</p>
+      <h1>{ui.notFound.title}</h1>
+      <p>{ui.notFound.lede}</p>
+      <a class="btn" href={sectionPath('home', lang)}>{ui.notFound.back}</a>
+    </div>
+  </section>
+</Base>

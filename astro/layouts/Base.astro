@@ -1,0 +1,27 @@
+---
+/* 页面外壳：把站点常量、界面串、主导航交给 kit 的 Layout，页面只管正文。
+   语言、当前路径、标题、描述、当前板块、是否显示阅读进度、结构化数据都从这里过。
+   ctx 由站点层的 ctxFor(lang) 建好后传入——底座不认识各站的分类体系与界面串。 */
+import Layout from '../Layout.astro';
+
+const {
+  ctx, lang, path, title, description,
+  active = '', progress = false, noindex = false, jsonLd = null,
+} = Astro.props;
+---
+
+<Layout
+  site={ctx.site}
+  lang={lang}
+  ui={ctx.ui}
+  path={path}
+  title={title}
+  description={description}
+  active={active}
+  nav={ctx.nav}
+  progress={progress}
+  noindex={noindex}
+  jsonLd={jsonLd}
+>
+  <slot />
+</Layout>
