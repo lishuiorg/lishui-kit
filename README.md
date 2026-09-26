@@ -2,7 +2,7 @@
 
 站群的公共地基。各分站的站点库都以 `file:../lishui-kit` 依赖引入这里，**不各写一份**。
 
-底座只装「每个分站都要的东西」：设计系统、知识组件、双语路由规则、专名译法、内容装载、校验引擎。**分站特有的东西一律不进 kit**——历史分站的六类归属、五期分期，山水分站的水系分级，都写在各自站点库里。
+底座只装「每个分站都要的东西」：设计系统、知识组件、页面模板、双语路由规则、专名译法、内容装载、校验引擎、分站脚手架。**分站特有的东西一律不进 kit**——历史分站的六类归属、五期分期，山水分站的水系分级，都写在各自站点库里。
 
 设计原则：**框架无关的部分不碰 Astro，模板部分才用 Astro。** `content/`、`i18n/`、`validate/`、`seo/`、`styles/`、`client/` 都是纯 JS/CSS，内容库的校验脚本、任何静态站点都能用；只有 `astro/` 认 Astro。
 
@@ -13,12 +13,17 @@
 | `styles/` | 设计系统：色板与明暗令牌、基础排版、知识组件样式、响应式 | 否，纯 CSS |
 | `client/` | 界面脚本：主题、滚动入场、阅读进度、筛选查找与分页、语言切换保位 | 否，原生 JS |
 | `content/` | front-matter 解析、来源层与成果层装载、条目派生助手 | 否 |
-| `i18n/` | 路径规则、专名与枚举译法、年代表述、渲染上下文 | 否 |
+| `i18n/` | 路径规则、专名与枚举译法、年代表述、渲染上下文、界面串默认值与合并 | 否 |
 | `validate/` | 内容校验引擎、产物链接自检、产物页面自检 | 否 |
 | `seo/` | sitemap 与 robots 生成 | 否 |
-| `astro/` | 页面外壳 `Layout`、页面壳 `layouts/Base`、404 视图 `views/NotFoundView`、构建配置工厂 `astro-config.mjs`、知识组件 | 是，仅此目录 |
-| `scripts/` | 自检脚本的命令行入口（站内链接、页面），各分站共用一份 | 否 |
-| `.github/workflows/site-deploy.yml` | 可复用发布工作流，站点库的 `deploy.yml` 只填三个参数 | — |
+| `schema/` | 站群级取值表：各站逐字相同的枚举及其英文译法；另有站点登记与本站取值表的读取 | 否 |
+| `astro/` | 页面外壳 `Layout`、页面壳 `layouts/Base`、**页面模板 `views/`**、404 视图、构建配置工厂 `astro-config.mjs`、知识组件 | 是，仅此目录 |
+| `scripts/` | 命令行入口：站内链接与页面自检、分站脚手架、在线站清单 | 否 |
+| `glossary.csv` | 站群唯一一份专名译法表 | — |
+| `site-defaults.mjs` | 全站一致的站点常量（`ARCHIVE`／`RULES`／`LIST_PAGE_SIZE`） | 否 |
+| `sites.mjs` | 站群清单：读门户 `sites.json`，生成跨站统一导航 | 否 |
+| `.github/workflows/site-deploy.yml` | 可复用发布工作流，站点库的 `deploy.yml` 只填两个参数 | — |
+| `.github/workflows/verify-sites.yml` | 底座回归：底座一改，自动构建全部 `status: live` 的站 | — |
 
 导入方式有两种，按需选：
 
@@ -109,7 +114,9 @@ initSite();   // 主题 + 滚动入场 + 阅读进度 + 语言切换保位 + 页
 | `makeGloss({ glossary, terms })` | 生成 `gloss(zh, lang)`：中文原样返回，英文按词表查，查不到原样返回（由校验脚本在入库前拦下） |
 | `enumLabel` / `typeLabel` / `depthLabel` / `confLabel` / `rightsLabel` / `catLabel` | 枚举与分类标签 |
 | `timeText(entry, { lang, gloss })`、`axisYear(entry, ...)` | 年代表述；精度只有年、十年、世纪三档，负年份表示公元前 |
-| `makeContext({ site, lang, ui, content, categories })` | **渲染上下文**，页面与组件只认 `ctx` |
+| `UI_DEFAULT` | 界面串默认值（`zh` / `en` 两份完整串） |
+| `mergeUi(base, override)` | 界面串深合并：对象逐键合并，数组与标量整体替换 |
+| `makeContext({ site, lang, ui, content, categories, sections })` | **渲染上下文**，页面与组件只认 `ctx` |
 
 译法有两个来源，按优先级：底座根目录 `glossary.csv`（专名，全站唯一一份，权威译法）→ 内容库 `schema/terms.en.json`（枚举值）。**同一个中文词不得同时出现在两处**：底座那份优先，内容库那份会被遮蔽而失效，改了不生效。
 
@@ -125,7 +132,18 @@ ctx.filterAttrs(entry)         // 筛选属性
 ctx.flags(entry)               // 可靠性标记
 ```
 
-**界面串由站点提供**（`ui.zh.json` / `ui.en.json`），kit 不预置文案。约定：`ui.labelSep` 中文用 `：`、英文用 `: `，避免英文页出现全角冒号。
+**界面串是「底座默认 + 站点覆盖」**：底座 `i18n/ui-default.mjs` 给出一份完整的默认串（`UI_DEFAULT`），站点 `ui.zh.json` / `ui.en.json` 只写本站要改的那几处，用 `mergeUi(UI_DEFAULT[lang], UI[lang])` 合并——**站点侧拿到的仍是完整对象，页面与组件照旧直接取用**。
+
+```js
+// src/site/context.mjs
+import { makeContext, mergeUi, UI_DEFAULT } from 'lishui-kit';
+import UI from '../i18n/ui.zh.json' with { type: 'json' };   // 实际按语言分别引入
+const ui = mergeUi(UI_DEFAULT[lang], UI[lang]);
+```
+
+合并规则：对象逐键合并，站点有的以站点为准；数组与标量整体替换。**数组不逐项合并**——界面串里的数组是整段列表（如凡例、导航项），逐项合并会拼出一个两边都不是的列表。
+
+约定：`ui.labelSep` 中文用 `：`、英文用 `: `，避免英文页出现全角冒号。
 
 ## validate/ · 校验
 
@@ -201,6 +219,34 @@ validateContent({
 | `RulesList.astro` | `items`，凡例 |
 | `Icon.astro` / `glyphs.mjs` | 内联 SVG 图标，无外部图标库 |
 
+**页面模板（`views/`）**
+
+六个页面在底座各有一个命名模板，站点层不再各存一份。**模板里没有一处站点判断**：差异归纳成有限几种「页面形态」，站点在自己那层的薄包装里 `import` 哪一种——分支落在站点层（本来就一站一份），kit 保持无分支。
+
+| 模板 | 形态 | 站点要给的 |
+| --- | --- | --- |
+| `HomeShell.astro` | 首页骨架：规模条 + 中部预览插槽 + 凡例 | `statItems`、`rules`、中部插槽内容 |
+| `HomeTimelineView.astro` | 首页变体：中部是时间轴分期 | `periods` |
+| `HomeBoardView.astro` | 首页变体：中部是板块卡 | `boardItems` |
+| `ListView.astro` | 列表页：筛选组 + 卡片网格 + 分页 | `section`、`entries`、`groups`、`text` |
+| `IndexView.astro` | 索引页：按类别分组 + 列序 | `groups`、`columns`、`total` |
+| `DetailView.astro` | 详情页：正文 + 侧栏 + 来源 + 相关 | `entry`、`siblings`、`metaBits`、`schemaType` |
+| `AboutView.astro` | 关于页：两栏各放哪几节 | `statItems`、`columns: { left, right }` |
+| `NotFoundView.astro` | 404 | — |
+
+站点侧的视图包装只剩三行——算数据，摊给模板：
+
+```astro
+---
+import HomeTimelineView from 'lishui-kit/astro/views/HomeTimelineView.astro';
+import { homeModel } from '../site/model.mjs';
+const { lang } = Astro.props;
+---
+<HomeTimelineView {...homeModel(lang)} />
+```
+
+**空白约定（改模板前必读）**：`compressHTML` 只把同一段静态文本里的连续空白压成一个空格，**不跨表达式节点与 slot 边界**合并。所以 slot 要紧贴容器标签、不留空白，间隔全部由 slot 内容自带的空白充当；否则产物会比手写多一个空格（`</p>  <h2>` 而非 `</p> <h2>`）。
+
 `Layout` 的 props：`site`、`lang`、`ui`、`path`、`title`、`description`、`active`、`nav`、`progress`、`noindex`、`jsonLd`。
 
 ## 站群互链
@@ -219,18 +265,20 @@ validateContent({
 
 ## 站点怎么用
 
-站点库只需要写四件事：
+站点库只写「本站特有」的四件事：
 
 ```js
-// src/site/config.mjs —— 站点常量、本站分类表、板块
-export const SITE = { name: '溧水历史', nameEn: 'Lishui History', origin: 'https://lishi.lishui.org', ... };
+// src/site/config.mjs —— 站点身份、本站分类表、板块说明、编纂凡例
+export const SITE = { id: 'lishui-history', name: '溧水历史', nameEn: 'Lishui History', origin: 'https://lishi.lishui.org', ... };
 export const CATEGORIES = [{ key: 'dashiji', zh: '大事记', en: 'Chronicle', desc: {...} }, ...];
-export const TYPE_DIRS = { events: 'event', places: 'place', articles: 'article' };
+export const SECTIONS = { events: { zh: {...}, en: {...} }, ... };
 ```
+
+实体类型与实体目录（`events` → `event` 之类）**不在这里**——它们登记在内容库的 `schema/sites.json`，装载与校验都从那里读，站点不再各传一份。
 
 ```js
 // src/site/content.mjs —— 装载内容库，套上本站规则（分类归属、分期、筛选值）
-const content = loadContent({ contentDir: resolveContentDir(), typeDirs: TYPE_DIRS });
+const content = loadContent({ contentDir: resolveContentDir(), siteId: SITE.id });
 for (const entry of content.entries) {
   entry.category = deriveCategory(entry);   // 本站规则
   entry.path = entryPath(entry);
@@ -238,23 +286,29 @@ for (const entry of content.entries) {
 ```
 
 ```js
-// src/site/context.mjs —— 由 makeContext 生成 ctx，页面共用
-export const ctxFor = (lang) => makeContext({ site: SITE, lang, ui: UI[lang], content: siteContent(), categories: CATEGORIES });
+// src/site/context.mjs —— 界面串合并 + 生成 ctx，页面共用
+const ui = mergeUi(UI_DEFAULT[lang], UI[lang]);
+export const ctxFor = (lang) => makeContext({ site: SITE, lang, ui, content: siteContent(), categories: CATEGORIES });
+```
+
+```js
+// src/site/model.mjs —— 每个页面要算什么：规模条、筛选组、分组维度、元信息行、排序口径
+export function listModel(lang, section) { /* ... */ return { ctx, lang, section, entries, groups, text }; }
 ```
 
 ```astro
 ---
-// src/views/XxxView.astro —— 视图只填数据，外壳与组件都来自 kit
-import Base from 'lishui-kit/astro/layouts/Base.astro';
-import CardGrid from 'lishui-kit/astro/CardGrid.astro';
-const ctx = ctxFor(lang);
+// src/views/XxxView.astro —— 薄包装：选底座的哪一种页面形态，把模型摊给它
+import ListView from 'lishui-kit/astro/views/ListView.astro';
+import { listModel } from '../site/model.mjs';
+const { lang, section } = Astro.props;
 ---
-<Base ctx={ctx} lang={lang} path={path} title={title} description={desc}>
-  <CardGrid entries={entries} ctx={ctx} />
-</Base>
+<ListView {...listModel(lang, section)} />
 ```
 
 `src/pages/` 下按目录结构定路由，中文在根、英文在 `en/` 下的对称路径，一个页面文件三五行：算数据 → 交给视图。
+
+**新增分站不必照抄这些**：跑一次 `scripts/scaffold-site.mjs` 生成骨架（站点库、本站 `schema/sites/<siteId>.json`、内容子树），再填本站特有的分类体系即可。用法见内容库 `README.md` 的「新增一个分站」。
 
 ## 站点构建与发布
 
@@ -274,7 +328,15 @@ export default makeAstroConfig({ site: SITE.origin });
 "check-pages": "node ../lishui-kit/scripts/check-pages.mjs"
 ```
 
-发布走 `.github/workflows/site-deploy.yml`（`on: workflow_call`）。站点库的 `deploy.yml` 只剩调用方，填站点库名与内容库名：
+`scripts/` 下的命令行入口，本地与 CI 共用：
+
+| 脚本 | 作用 |
+| --- | --- |
+| `check-links.mjs` / `check-pages.mjs` | 产物自检（站内链接、页面互指与主题脚本），站点 `package.json` 直接指过来 |
+| `scaffold-site.mjs` | 分站脚手架：一条命令生成新站骨架（站点库、本站取值表、内容子树），用法见内容库 `README.md` 的「新增一个分站」 |
+| `live-sites.mjs` | 从门户 `sites.json` 取 `status: live` 的站，输出一行 JSON 供 CI 生成构建矩阵 |
+
+发布走 `.github/workflows/site-deploy.yml`（`on: workflow_call`）。站点库的 `deploy.yml` 只剩调用方，填站点库名与本站内容侧 siteId：
 
 ```yaml
 jobs:
@@ -282,21 +344,33 @@ jobs:
     uses: lishuiorg/lishui-kit/.github/workflows/site-deploy.yml@main
     with:
       site: site-lishi
-      contentRepo: lishui-history
-      contentPath: lishui-history
+      siteId: lishui-history
 ```
+
+工作流内部检出四个库（站点库、底座、内容库、门户 `sites.json`）并保持同级目录关系，再跑与本地同一条 `npm run check`。内容库按本站子树**稀疏检出**——只拉 `content/<siteId>/`、`content/en/<siteId>/`、共享来源层与取值表，不为构建一个站拉下全部站的 markdown 与影印文本。少检了会直接构建失败，不会静默出错。
 
 ## 版本与升级
 
 kit 以 `file:../lishui-kit` 装在站点库与内容库的 `node_modules` 下，是**符号链接**：改 kit 后分站立即生效，不必重装。
 
 - Astro 的 `vite.resolve.preserveSymlinks` 必须为 `true`，让 Vite 按链接路径解析，否则会把 `node_modules` 之外的真实路径当成项目外文件；
-- kit 目前是 `private` 包、版本 `0.1.0`，**不做独立发版**——站群同仓库、同分支一起演进。等分站数量上来、需要分别锁版本时，再考虑打 tag 或发私有 registry；
-- 唯一运行时依赖是 `marked`（Markdown → HTML）。样式与界面脚本零依赖，校验与收录零依赖。
+- 唯一运行时依赖是 `marked`（Markdown → HTML）。样式与界面脚本零依赖，校验与收录零依赖；
+- kit 目前是 `private` 包、版本 `0.1.0`，**不做独立发版**——站群同仓库、同分支一起演进。
+
+### 发布纪律
+
+底座是全部站点共用的一层，**改一行没有任何东西会告诉你哪个站被改坏**。三道约束，按发现问题的先后排：
+
+1. **本地自检**：改 kit 后，在受影响的站点库跑 `npm run check`（校验 + 构建 + 站内链接 + 页面自检）。动了视图模板或界面串默认值，还要与改动前的 `dist/` **逐字节比对**——`compressHTML` 的空白行为与 slot 边界会让「看着一样」的模板产出不一样的 HTML（见上文「空白约定」）。
+2. **CI 回归（PR 阶段）**：`.github/workflows/verify-sites.yml` 把当前 `status: live` 的站点全部构建一遍，与发布走同一条 `npm run check`。站点清单从门户 `sites.json` 现取，**新站上线只改那里的 status，本工作流一行都不用动**。这是唯一能挡住「底座改动静默改坏某个站」的机制——故意改掉一个组件 prop 名，它就会报错。
+3. **引用方式**：各站以 `@main` 引用底座，所以 PR 阶段的回归是**必需**的，不是可选的。若后期站点多到 CI 变慢，再改为按 tag 引用、显式升级；那时每站锁一个版本，代价是升级要逐站改。
+
+**改底座的顺序**：先在本分支把改动做完 → 本地跑受影响站点的 `npm run check` → 推 kit 的 PR，等 `verify-sites` 全绿 → 合并。破坏性改动（改 prop 名、改导出名、改默认值语义）必须同步改各站调用处，或按「先加新的、再改站点、最后删旧的」分两次提交——`verify-sites` 会在第一次就报出还有哪个站没跟上。
 
 ## 谁不写在这里
 
-- **内容**不进 kit。内容在各自的内容库（`lishui-history` 等），kit 只提供读它的代码；
+- **内容**不进 kit。内容在统一内容库 `lishui`，kit 只提供读它的代码；
 - **站点分类与分期**不进 kit。kit 只提供 `catLabel` 这类通用助手，具体有哪些类别由站点给；
-- **界面文案**不进 kit。文案在站点的 `ui.zh.json` / `ui.en.json`；
-- **站点专属校验规则**不进 kit。以 `extra` 回调注入。
+- **站点界面文案**不进 kit。文案在站点的 `ui.zh.json` / `ui.en.json`，只写覆盖键；默认值在 `i18n/ui-default.mjs`；
+- **站点专属校验规则**不进 kit。以 `extra` 回调注入；
+- **站群清单**不进 kit。`sites.json` 由门户持有，kit 只负责读它并生成导航。
