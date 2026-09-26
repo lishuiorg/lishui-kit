@@ -10,14 +10,25 @@
  *   5. 双语配对——published 条目必须中英成对，共用同一 ID；
  *   6. 专名一致——中文标题里的专名，英文标题必须用 glossary.csv 的译法。
  *
+ * 内容合库后按站分区：本站条目在 content/<siteId>/<dir>，来源层 sources/ 全局共享，
+ * 取值表由 schema/read.mjs 统一读取（底座共用项 + 本站特有项）。缺站点登记或
+ * 缺本站取值表一律抛错，不静默放行。
+ *
+ * 另有三项与「分站会越来越多」直接相关的加固：
+ *   · 译法表重叠即报错——同一个中文词不得同时住在 glossary.csv 与 terms.en.json；
+ *   · 跨站关联显式识别——指向他站条目的 related 单独提示，不混作「ID 写错」；
+ *   · validateAll——编排器一次跑完全部站点。
+ *
  * 分站专属规则（如「事件必须有时间字段」）由站点以 extra 回调注入。
+ * 专名词表取自底座根目录的 glossary.csv，不随内容库各存一份。
  * 零依赖，CI 无需 npm install。
  */
 
-import { readFileSync } from 'node:fs';
 import { join, basename, relative, sep } from 'node:path';
-import { loadMarkdown, listMarkdown, readCsv } from '../content/frontmatter.mjs';
+import { loadMarkdown, listMarkdown } from '../content/frontmatter.mjs';
+import { readGlossary } from '../i18n/glossary.mjs';
 import { flattenTerms } from '../i18n/labels.mjs';
+import { readSiteRegistry, readSiteSchema, readTags, readTerms } from '../schema/read.mjs';
 
 export const CJK = /[\u3400-\u9FFF\uF900-\uFAFF\u3000-\u303F]/;
 
@@ -39,11 +50,32 @@ export const SOURCE_DIRS = ['fulltext', 'excerpts', 'records'];
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/* 整库 ID 索引：id → siteId。跨站关联的识别靠它。
+   内容库整库校验时才需要，故按 repo 缓存，validateAll 只扫一次。 */
+const idIndexCache = new Map();
+
+function idIndex(repo) {
+  if (idIndexCache.has(repo)) return idIndexCache.get(repo);
+  const index = new Map();
+  for (const [siteId, reg] of Object.entries(readSiteRegistry(repo))) {
+    for (const dirName of Object.keys(reg.typeDirs || {})) {
+      for (const file of listMarkdown(join(repo, 'content', siteId, dirName))) {
+        try {
+          const { data } = loadMarkdown(file);
+          if (data && data.id && !index.has(data.id)) index.set(data.id, siteId);
+        } catch (e) { /* 解析失败由本站校验逐条报出，这里只做索引 */ }
+      }
+    }
+  }
+  idIndexCache.set(repo, index);
+  return index;
+}
+
 /**
  * @param {object} opts
  * @param {string} opts.repo         内容库根目录
  * @param {string} opts.siteId       本站 site 字段取值
- * @param {string[]} opts.typeDirs   实体目录名
+ * @param {Record<string,string>} [opts.typeDirs]  覆盖站点登记的实体目录（默认取 schema/sites.json）
  * @param {string[]} [opts.requiredFields]
  * @param {Set<string>} [opts.allowedFields]
  * @param {Set<string>} [opts.glossaryTitleCategories]  需校验专名一致性的词条类别
@@ -65,26 +97,49 @@ export function validateContent({
   const warn = (file, msg) => problems.push({ level: 'warn', file, msg });
   const rel = (p) => relative(repo, p).split(sep).join('/');
 
-  const enums = JSON.parse(readFileSync(join(repo, 'schema/enums.json'), 'utf8'));
-  const tagsFile = JSON.parse(readFileSync(join(repo, 'schema/tags.json'), 'utf8'));
-  const termsFile = join(repo, 'schema', 'terms.en.json');
-  let terms = {};
-  try {
-    terms = JSON.parse(readFileSync(termsFile, 'utf8'));
-  } catch (e) {
-    warn('schema/terms.en.json', '未找到枚举英文对照表，英文页的枚举取值可能漏出中文');
-  }
+  const { registry, typeDirs: registered, enums } = readSiteSchema(repo, siteId);
+  const dirs = typeDirs || registered;
+  const tags = readTags(repo);
+  const terms = readTerms(repo);
   const flatTerms = flattenTerms(terms);
-  const eraRoots = Object.keys(terms.eraRoot || {});
-  const allowedTags = new Set(Object.values(tagsFile.tags).flat());
-  const glossary = readCsv(join(repo, 'glossary.csv'))
-    .slice(1)
-    .map((r) => ({ zh: r[0], en: r[1], category: r[2] || '' }))
-    .filter((r) => r.zh && r.en);
+  const allowedTags = new Set(Object.values(tags).flat());
+  const glossary = readGlossary();
   const glossaryZh = new Set(glossary.map((g) => g.zh));
+  /* 年号词根：术语表的 eraRoot（尚未收进词表的年号）+ 词表里的年号。
+     合库时已收进 glossary.csv 的年号不再在 eraRoot 里重复（重复即死值），
+     故两处都要算，否则「明洪武十八年」这类纪年串会判成无译法。 */
+  const eraRoots = [
+    ...Object.keys(terms.eraRoot || {}),
+    ...glossary.filter((g) => g.category === '年号').map((g) => g.zh),
+  ];
 
   const oneOf = (list, v) => list.includes(v);
   const thisYear = new Date().getFullYear();
+
+  /* --- 译法表重叠：同一个中文词不得同时住在两张表里 --- */
+
+  /* glossary.csv 优先于 terms.en.json，同时收进两处的那一份改不生效，
+     正是阶段一 4 条译法冲突的根因。出现即报错，避免同类问题随站点增加反复发生。 */
+  for (const zh of Object.keys(flatTerms)) {
+    if (glossaryZh.has(zh)) {
+      err('schema/terms.en.json', `「${zh}」在 glossary.csv 里已有译法，本表重复且不生效，请二选一`);
+    }
+  }
+
+  /* --- 译法表内部重叠：同一个中文词不得跨组重复 --- */
+
+  /* 查词走 flattenTerms（拍平成单层映射），只有先出现的那一组生效，后一组永不命中。
+     重复即死值，改后一组不生效；合并三库词表时一次查出 30 处，故设门禁防复发。 */
+  const seenZh = new Map();
+  for (const [g, group] of Object.entries(terms)) {
+    if (!group || typeof group !== 'object') continue;
+    for (const zh of Object.keys(group)) {
+      if (seenZh.has(zh)) {
+        err('schema/terms.en.json',
+          `「${zh}」同时住在 ${seenZh.get(zh)} 与 ${g} 两组，查词只认先出现的 ${seenZh.get(zh)}，${g} 那份不生效，请二选一`);
+      } else seenZh.set(zh, g);
+    }
+  }
 
   /* --- 词表覆盖：取值表里的中文取值必须能翻成英文 --- */
 
@@ -93,7 +148,8 @@ export function validateContent({
   const eraTranslatable = (v) => translatable(v) || eraRoots.some((r) => v.includes(r));
   const enumValues = [
     ...(enums.placeType || []), ...(enums.genre || []), ...(enums.protectionLevel || []),
-    ...(enums.dynasty || []), ...allowedTags,
+    ...(enums.dynasty || []), ...(enums.itemType || []), ...(enums.level || []),
+    ...(enums.unitType || []), ...allowedTags,
   ];
   for (const v of new Set(enumValues)) {
     if (CJK.test(v) && !translatable(v)) {
@@ -148,11 +204,11 @@ export function validateContent({
   /* --- 成果层 --- */
 
   const entries = [];
-  for (const [dirName, type] of Object.entries(typeDirs)) {
+  for (const [dirName, type] of Object.entries(dirs)) {
     for (const lang of ['zh', 'en']) {
       const base = lang === 'zh'
-        ? join(repo, 'content', dirName)
-        : join(repo, 'content', 'en', dirName);
+        ? join(repo, 'content', siteId, dirName)
+        : join(repo, 'content', 'en', siteId, dirName);
       for (const file of listMarkdown(base)) {
         const f = rel(file);
         let doc;
@@ -176,6 +232,14 @@ export function validateContent({
     if (slot[e.lang]) err(e.file, `同一语言出现重复条目：${d.id}`);
     slot[e.lang] = e;
   }
+
+  /* 跨站关联识别：内容合库后 byId 只装本站条目，指向他站条目的关联会报「不存在」，
+     容易被当成 ID 写错。这里单独判一次并给出明确提示。 */
+  const index = idIndex(repo);
+  const siteOf = (id) => {
+    const owner = index.get(id);
+    return owner && owner !== siteId ? owner : null;
+  };
 
   for (const e of entries) {
     const d = e.data;
@@ -260,7 +324,13 @@ export function validateContent({
       if (!Array.isArray(d.related)) err(f, 'related 需为数组');
       else for (const r of d.related) {
         if (!/^ls:[a-z]+:[a-z0-9]+(-[a-z0-9]+)*$/.test(r)) err(f, `related 取值格式不合规：${r}`);
-        else if (!byId.has(r)) err(f, `关联的条目不存在：${r}`);
+        else if (!byId.has(r)) {
+          const owner = siteOf(r);
+          if (owner) {
+            err(f, `related 指向其他分站的条目：${r} 属于 ${owner}。`
+              + '内容合库后 related 只在本站范围内解析，跨站引用请改用绝对 URL');
+          } else err(f, `关联的条目不存在：${r}`);
+        }
       }
     }
 
@@ -289,7 +359,10 @@ export function validateContent({
 
     /* 分站专属规则 */
     if (extra) {
-      extra({ entry: e, data: d, file: f, sources, byId, enums, glossary, terms: flatTerms, err, warn, oneOf, CJK });
+      extra({
+        entry: e, data: d, file: f, sources, byId, enums, glossary, terms: flatTerms,
+        registry, siteOf, err, warn, oneOf, CJK,
+      });
     }
   }
 
@@ -319,10 +392,25 @@ export function validateContent({
     if (!zh || !en) continue;
     const zhTitle = String(zh.data.title || '');
     const enDisplay = `${en.data.title || ''} ${en.data.subtitle || ''}`.toLowerCase();
+    /* 词表三库合一份后，长词会被它包含的短词重复命中：「义气墩故事」同时含
+       「义气墩」（历史库的墓葬词条），若逐条要求译法就会误报。重叠时只认最长
+       的那个词条，短词被覆盖即跳过。覆盖者不限于本站要校验的类别——更专的词
+       条（如上例的「义气墩故事」）即便不属于这些类别，也照样管住短词。 */
+    const hits = [];
     for (const g of glossary) {
-      if (!glossaryTitleCategories.has(g.category)) continue;
-      if (zhTitle.includes(g.zh) && !enDisplay.includes(g.en.toLowerCase())) {
-        err(en.file, `专名不一致：中文标题含「${g.zh}」，英文标题与副标题未见「${g.en}」`);
+      if (g.category === '规则') continue;
+      for (let at = zhTitle.indexOf(g.zh); at !== -1; at = zhTitle.indexOf(g.zh, at + 1)) {
+        hits.push({ g, at, end: at + g.zh.length });
+      }
+    }
+    const reported = new Set();
+    for (const h of hits) {
+      if (!glossaryTitleCategories.has(h.g.category) || reported.has(h.g)) continue;
+      reported.add(h.g);
+      const covered = hits.some((o) => o.at <= h.at && o.end >= h.end && o.end - o.at > h.end - h.at);
+      if (covered) continue;
+      if (!enDisplay.includes(h.g.en.toLowerCase())) {
+        err(en.file, `专名不一致：中文标题含「${h.g.zh}」，英文标题与副标题未见「${h.g.en}」`);
       }
     }
     for (const line of en.body.split('\n')) {
@@ -346,11 +434,45 @@ export function validateContent({
       console.log(`${p.level === 'error' ? '错误' : '警告'}  ${p.file}  ${p.msg}`);
     }
     console.log('');
-    console.log(`条目 ${entries.length} 条（中 ${entries.filter((e) => e.lang === 'zh').length} / 英 ${entries.filter((e) => e.lang === 'en').length}），`
+    console.log(`[${siteId}] 条目 ${entries.length} 条（中 ${entries.filter((e) => e.lang === 'zh').length} / 英 ${entries.filter((e) => e.lang === 'en').length}），`
       + `来源记录 ${sources.size} 份，标签 ${allowedTags.size} 个，专名 ${glossary.length} 条`);
     console.log(`错误 ${errors.length} 项，警告 ${warns.length} 项`);
     if (errors.length === 0) console.log('校验通过。');
   }
 
-  return { problems, errors, warns, entries, sources, enums, glossary, terms: flatTerms };
+  return { siteId, problems, errors, warns, entries, sources, enums, glossary, terms: flatTerms };
+}
+
+/**
+ * 一次跑完全部站点。编排器（内容库 scripts/validate.mjs）把各站规则模块传进来，
+ * 每站只套本站规则，互不干扰。
+ * @param {object} opts
+ * @param {string} opts.repo
+ * @param {Array<{siteId?:string, SITE_ID?:string, run:Function}>} opts.sites
+ * @param {boolean} [opts.quiet]
+ */
+export function validateAll({ repo, sites, quiet = false } = {}) {
+  const results = sites.map((m) => {
+    const siteId = m.siteId || m.SITE_ID || '(未命名)';
+    return { siteId, result: m.run({ repo, quiet: true }) };
+  });
+  const problems = results.flatMap(({ siteId, result }) => (
+    result.problems.map((p) => ({ ...p, siteId }))
+  ));
+  const errors = problems.filter((p) => p.level === 'error');
+  const warns = problems.filter((p) => p.level === 'warn');
+
+  if (!quiet) {
+    for (const p of problems) {
+      console.log(`${p.level === 'error' ? '错误' : '警告'}  [${p.siteId}]  ${p.file}  ${p.msg}`);
+    }
+    console.log('');
+    for (const { siteId, result } of results) {
+      console.log(`[${siteId}] 条目 ${result.entries.length} 条，来源引用 ${result.sources.size} 份`);
+    }
+    console.log(`合计错误 ${errors.length} 项，警告 ${warns.length} 项`);
+    if (errors.length === 0) console.log('校验通过。');
+  }
+
+  return { results, problems, errors, warns };
 }

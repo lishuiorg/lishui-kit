@@ -4,22 +4,28 @@
  * 与框架无关：不认 Astro，也不认分类体系——分站的类别、分期、街镇
  * 都在站点层自行推导，这里只负责「把 Markdown 变成可渲染的条目」。
  *
+ * 内容合库后按站分区：条目在 content/<siteId>/<dir> 与 content/en/<siteId>/<dir>，
+ * 来源层 sources/ 全局共享，取值表由 schema/read.mjs 统一读取。
+ *
  * 解析实现复用 ./frontmatter.mjs，与校验脚本共用一份，避免两处各写一遍。
+ * 专名词表是例外：它不来自内容库，而是底座根目录的 glossary.csv，全站唯一一份。
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { marked } from 'marked';
-import { loadMarkdown, listMarkdown, readCsv } from './frontmatter.mjs';
+import { loadMarkdown, listMarkdown } from './frontmatter.mjs';
 import { LANGS } from '../i18n/paths.mjs';
+import { readGlossary } from '../i18n/glossary.mjs';
+import { readSiteSchema, readTags, readTerms } from '../schema/read.mjs';
 
 /** 来源层的三个子目录，对应三种归档深度。 */
 export const SOURCE_DIRS = ['fulltext', 'excerpts', 'records'];
 
-/** 内容库位置：按候选顺序取第一个含 schema/enums.json 的目录。 */
+/** 内容库位置：按候选顺序取第一个含 schema/sites.json 的目录。 */
 export function resolveContentDir(candidates) {
   for (const dir of candidates.filter(Boolean)) {
-    if (existsSync(join(dir, 'schema', 'enums.json'))) return dir;
+    if (existsSync(join(dir, 'schema', 'sites.json'))) return dir;
   }
   throw new Error(
     '找不到内容库。请设置 LISHUI_CONTENT_DIR，或把内容库放在候选路径之一。',
@@ -45,18 +51,14 @@ export function renderMarkdown(body) {
 /**
  * @param {object} opts
  * @param {string} opts.contentDir  内容库根目录
- * @param {Record<string,string>} opts.typeDirs  目录名 → 实体类型，如 { events:'event', places:'place', articles:'article' }
+ * @param {string} opts.siteId      本站 site 字段取值，同时决定读哪一棵内容子树
  * @param {boolean} [opts.publishedOnly=true]  只取 status 为 published 的条目
  */
-export function loadContent({ contentDir, typeDirs, publishedOnly = true }) {
-  const enums = JSON.parse(readFileSync(join(contentDir, 'schema/enums.json'), 'utf8'));
-  const tagsFile = JSON.parse(readFileSync(join(contentDir, 'schema/tags.json'), 'utf8'));
-  const termsPath = join(contentDir, 'schema', 'terms.en.json');
-  const terms = existsSync(termsPath) ? JSON.parse(readFileSync(termsPath, 'utf8')) : {};
-  const glossary = readCsv(join(contentDir, 'glossary.csv'))
-    .slice(1)
-    .map((r) => ({ zh: r[0], en: r[1], category: r[2] || '', note: r[3] || '' }))
-    .filter((r) => r.zh && r.en);
+export function loadContent({ contentDir, siteId, publishedOnly = true }) {
+  const { types, typeDirs, enums } = readSiteSchema(contentDir, siteId);
+  const tags = readTags(contentDir);
+  const terms = readTerms(contentDir);
+  const glossary = readGlossary();
 
   const sources = new Map();
   for (const dir of SOURCE_DIRS) {
@@ -70,8 +72,8 @@ export function loadContent({ contentDir, typeDirs, publishedOnly = true }) {
   for (const [dirName, type] of Object.entries(typeDirs)) {
     for (const lang of LANGS) {
       const base = lang === 'zh'
-        ? join(contentDir, 'content', dirName)
-        : join(contentDir, 'content', 'en', dirName);
+        ? join(contentDir, 'content', siteId, dirName)
+        : join(contentDir, 'content', 'en', siteId, dirName);
       for (const file of listMarkdown(base)) {
         const { data, body } = loadMarkdown(file);
         if (publishedOnly && data.status !== 'published') continue;
@@ -99,8 +101,20 @@ export function loadContent({ contentDir, typeDirs, publishedOnly = true }) {
     e.placeRefResolved = (e.place_ref || []).map((id) => byId.get(id)?.[e.lang]).filter(Boolean);
   }
 
-  const sourcesAll = [...sources.values()].sort((a, b) => String(a.id).localeCompare(String(b.id)));
-  return { contentDir, enums, tags: tagsFile.tags, terms, glossary, sources, sourcesAll, entries, byId };
+  /* 站点口径：来源层在库里是全局共享的一份，但站点页面上的「来源记录」数
+     与「关于」页的授权/归档构成都是**本站**的，故只保留本站条目实际引用到的
+     卡片。合库前该数等于本站 sources/ 目录的文件数（含少量无人引用的卡）；
+     合库后按引用关系取，既不混入他站来源，也不再计入无人引用的卡。 */
+  const cited = new Set();
+  for (const e of entries) for (const s of e.sources || []) cited.add(s.ref);
+  const siteSources = new Map([...sources].filter(([id]) => cited.has(id)));
+  const sourcesAll = [...siteSources.values()]
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+  return {
+    contentDir, siteId, types, typeDirs, enums, tags, terms, glossary,
+    sources: siteSources, sourcesAll, entries, byId,
+  };
 }
 
 /* ---------- 取用 ---------- */
