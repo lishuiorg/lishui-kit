@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "溧水知识站群共享底座：设计系统、知识组件、内容装载、校验规则、多语言。",
+  "description": "溧水一方共享底座：设计系统、知识组件、内容装载、校验规则、多语言。",
   "exports": {
     ".": "./index.mjs",
     "./styles/*": "./styles/*",

@@ -1,8 +1,8 @@
-# lishui-kit · 溧水知识站群共享底座
+# lishui-kit · 溧水一方共享底座
 
 站群的公共地基。各分站的站点库都以 `file:../lishui-kit` 依赖引入这里，**不各写一份**。
 
-底座只装「每个分站都要的东西」：设计系统、知识组件、双语路由规则、专名译法、内容装载、校验引擎。**分站特有的东西一律不进 kit**——历史志的六类归属、五期分期，山水志的水系分级，都写在各自站点库里。
+底座只装「每个分站都要的东西」：设计系统、知识组件、双语路由规则、专名译法、内容装载、校验引擎。**分站特有的东西一律不进 kit**——历史分站的六类归属、五期分期，山水分站的水系分级，都写在各自站点库里。
 
 设计原则：**框架无关的部分不碰 Astro，模板部分才用 Astro。** `content/`、`i18n/`、`validate/`、`seo/`、`styles/`、`client/` 都是纯 JS/CSS，内容库的校验脚本、任何静态站点都能用；只有 `astro/` 认 Astro。
 
@@ -221,7 +221,7 @@ validateContent({
 
 ```js
 // src/site/config.mjs —— 站点常量、本站分类表、板块
-export const SITE = { name: '溧水历史志', nameEn: 'Lishui History', origin: 'https://lishi.lishui.org', ... };
+export const SITE = { name: '溧水历史', nameEn: 'Lishui History', origin: 'https://lishi.lishui.org', ... };
 export const CATEGORIES = [{ key: 'dashiji', zh: '大事记', en: 'Chronicle', desc: {...} }, ...];
 export const TYPE_DIRS = { events: 'event', places: 'place', articles: 'article' };
 ```
