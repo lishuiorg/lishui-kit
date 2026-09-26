@@ -16,7 +16,9 @@
 | `i18n/` | 路径规则、专名与枚举译法、年代表述、渲染上下文 | 否 |
 | `validate/` | 内容校验引擎、产物链接自检、产物页面自检 | 否 |
 | `seo/` | sitemap 与 robots 生成 | 否 |
-| `astro/` | 页面外壳 `Layout` 与知识组件 | 是，仅此目录 |
+| `astro/` | 页面外壳 `Layout`、页面壳 `layouts/Base`、404 视图 `views/NotFoundView`、构建配置工厂 `astro-config.mjs`、知识组件 | 是，仅此目录 |
+| `scripts/` | 自检脚本的命令行入口（站内链接、页面），各分站共用一份 | 否 |
+| `.github/workflows/site-deploy.yml` | 可复用发布工作流，站点库的 `deploy.yml` 只填三个参数 | — |
 
 导入方式有两种，按需选：
 
@@ -109,7 +111,7 @@ initSite();   // 主题 + 滚动入场 + 阅读进度 + 语言切换保位 + 页
 | `timeText(entry, { lang, gloss })`、`axisYear(entry, ...)` | 年代表述；精度只有年、十年、世纪三档，负年份表示公元前 |
 | `makeContext({ site, lang, ui, content, categories })` | **渲染上下文**，页面与组件只认 `ctx` |
 
-译法有两个来源，按优先级：内容库 `glossary.csv`（专名，权威译法）→ `schema/terms.en.json`（枚举值）。
+译法有两个来源，按优先级：底座根目录 `glossary.csv`（专名，全站唯一一份，权威译法）→ 内容库 `schema/terms.en.json`（枚举值）。**同一个中文词不得同时出现在两处**：底座那份优先，内容库那份会被遮蔽而失效，改了不生效。
 
 `ctx` 上挂着页面要的一切，组件不必自己拼装：
 
@@ -243,15 +245,46 @@ export const ctxFor = (lang) => makeContext({ site: SITE, lang, ui: UI[lang], co
 ```astro
 ---
 // src/views/XxxView.astro —— 视图只填数据，外壳与组件都来自 kit
-import Base from '../layouts/Base.astro';
+import Base from 'lishui-kit/astro/layouts/Base.astro';
 import CardGrid from 'lishui-kit/astro/CardGrid.astro';
+const ctx = ctxFor(lang);
 ---
-<Base lang={lang} path={path} title={title} description={desc}>
+<Base ctx={ctx} lang={lang} path={path} title={title} description={desc}>
   <CardGrid entries={entries} ctx={ctx} />
 </Base>
 ```
 
 `src/pages/` 下按目录结构定路由，中文在根、英文在 `en/` 下的对称路径，一个页面文件三五行：算数据 → 交给视图。
+
+## 站点构建与发布
+
+构建配置与发布流程也集中在底座，新增分站不必复制这几份文件。
+
+```js
+// astro.config.mjs —— 通用部分在底座，本站只填域名
+import { makeAstroConfig } from 'lishui-kit/astro/astro-config.mjs';
+import { SITE } from './src/site/config.mjs';
+export default makeAstroConfig({ site: SITE.origin });
+```
+
+自检脚本的命令行入口在 `scripts/`，站点库 `package.json` 直接指过去（**站点层不再各存一份包装脚本**）：
+
+```json
+"check-links": "node ../lishui-kit/scripts/check-links.mjs",
+"check-pages": "node ../lishui-kit/scripts/check-pages.mjs"
+```
+
+发布走 `.github/workflows/site-deploy.yml`（`on: workflow_call`）。站点库的 `deploy.yml` 只剩调用方，填站点库名与内容库名：
+
+```yaml
+jobs:
+  deploy:
+    uses: lishuiorg/lishui-kit/.github/workflows/site-deploy.yml@main
+    with:
+      site: site-lishi
+      contentRepo: lishui-history
+      contentPath: lishui-history
+```
 
 ## 版本与升级
 

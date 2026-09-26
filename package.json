@@ -6,10 +6,13 @@
   "description": "溧水一方共享底座：设计系统、知识组件、内容装载、校验规则、多语言。",
   "exports": {
     ".": "./index.mjs",
+    "./site-defaults.mjs": "./site-defaults.mjs",
+    "./glossary.csv": "./glossary.csv",
     "./styles/*": "./styles/*",
     "./client/*": "./client/*",
     "./content/*": "./content/*",
     "./i18n/*": "./i18n/*",
+    "./schema/*": "./schema/*",
     "./seo/*": "./seo/*",
     "./validate/*": "./validate/*",
     "./astro/*": "./astro/*"
