@@ -4,6 +4,8 @@
    供 client/filter.js 在已生成的页面上筛选，不需要第二份数据。 */
 const { entry, ctx } = Astro.props;
 const y = ctx.axisYear(entry);
+/* 左上角：非遗项目给级别，其余条目给年份（无年份时退回纪年）。 */
+const top = entry.level ? ctx.enumLabel('level', entry.level) : y.main;
 const tags = (entry.tags || []).slice(0, 3);
 const flags = ctx.flags(entry);
 const attrs = ctx.filterAttrs(entry);
@@ -11,7 +13,7 @@ const attrs = ctx.filterAttrs(entry);
 
 <a class={`card card--${entry.type}`} href={entry.path} {...attrs}>
   <span class="card__top">
-    <span class="card__year">{y.main}</span>
+    <span class="card__year">{top}</span>
     <span class="card__badge">{ctx.catLabel(entry)}</span>
   </span>
   <span class="card__title">{entry.title}</span>

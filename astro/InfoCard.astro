@@ -10,6 +10,10 @@ const push = (key, value) => { if (value) rows.push({ key, value }); };
 
 push(ui.detail.type, ctx.typeLabel(entry));
 push(ui.detail.category, ctx.catLabel(entry));
+if (entry.item_type) push(ui.detail.itemType, ctx.enumLabel('itemType', entry.item_type));
+if (entry.level) push(ui.detail.level, ctx.enumLabel('level', entry.level));
+if (entry.batch) push(ui.detail.batch, entry.batch);
+if (entry.guardian) push(ui.detail.guardian, ctx.gloss(entry.guardian, ctx.lang));
 push(ui.detail.time, ctx.timeText(entry));
 
 const eraRaw = entry.era || entry.time?.era || '';

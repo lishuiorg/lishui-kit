@@ -22,7 +22,7 @@ import { clampPage, pageCount, pageRange, pageWindow } from './paging.js';
 
 const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
 
-const FILTER_GROUPS = ['category', 'dynasty', 'town', 'tag'];
+const FILTER_GROUPS = ['category', 'itemtype', 'level', 'dynasty', 'town', 'tag'];
 const FILTER_SET = new Set(FILTER_GROUPS);
 const PAGE_KEY = 'page';
 /* 地址栏里由脚本接管、每次重写的键；其余键（如页内锚点）原样保留。 */

@@ -26,6 +26,8 @@ export function filterAttrs(entry, ctx) {
     'data-type': entry.type || '',
   };
   if (entry.time?.dynasty) attrs['data-dynasty'] = entry.time.dynasty;
+  if (entry.item_type) attrs['data-itemtype'] = entry.item_type;
+  if (entry.level) attrs['data-level'] = entry.level;
   if (entry.town) attrs['data-town'] = entry.town;
   if (entry.tags?.length) attrs['data-tags'] = entry.tags.join(' ');
   return attrs;

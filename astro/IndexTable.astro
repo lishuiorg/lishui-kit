@@ -1,25 +1,33 @@
 ---
-/* 索引表：全部条目按年代序分组的总览，供「有没有写」的快速核对。
-   groups 由站点算好：{ key, name, range, items }，末尾一组通常是无年份的条目。 */
-const { groups = [], ctx } = Astro.props;
+/* 索引表：全部条目分组的总览，供「有没有写」的快速核对。
+   groups 由站点算好：{ key, name, range, items }。
+   columns 由站点给出列序，取值为 year / entry / type / category / itemtype / level / depth；
+   历史站按年代分组、首列是年份，文化站按类别分组、首列是条目。 */
+const { groups = [], ctx, columns = ['year', 'entry', 'type', 'category', 'depth'] } = Astro.props;
 const { ui } = ctx;
-const cols = [
-  ui.indexPage.colYear, ui.indexPage.colEntry,
-  ui.indexPage.colType, ui.indexPage.colCategory, ui.indexPage.colDepth,
-];
+const LABEL = {
+  year: ui.indexPage.colYear,
+  entry: ui.indexPage.colEntry,
+  type: ui.indexPage.colType,
+  category: ui.indexPage.colCategory,
+  itemtype: ui.indexPage.colItemType,
+  level: ui.indexPage.colLevel,
+  depth: ui.indexPage.colDepth,
+};
+const cols = columns.map((key) => ({ key, label: LABEL[key] }));
 const filled = groups.filter((group) => group.items.length > 0);
 ---
 
 <div class="tablewrap">
   <table class="indextable">
     <thead>
-      <tr>{cols.map((col) => <th scope="col">{col}</th>)}</tr>
+      <tr>{cols.map((col) => <th scope="col">{col.label}</th>)}</tr>
     </thead>
     {filled.map((group) => (
       <tbody data-search-group>
         <tr class="indextable__group">
-          <td colspan="5">
-            {group.name}{group.range ? ` · ${group.range}` : ''} ·{' '}
+          <td colspan={cols.length}>
+            {group.range ? `${group.name} · ${group.range} · ` : `${group.name} · `}
             <span data-group-count data-unit={ui.list.countUnit}>
               {group.items.length} {ui.list.countUnit}
             </span>
@@ -29,14 +37,25 @@ const filled = groups.filter((group) => group.items.length > 0);
           const y = ctx.axisYear(entry);
           return (
             <tr {...ctx.filterAttrs(entry)}>
-              <td class="indextable__year">{y.main}{y.sub && <small>{y.sub}</small>}</td>
-              <td class="indextable__entry">
-                <a href={entry.path}>{entry.title}</a>
-                {entry.subtitle && <span class="indextable__sub">{entry.subtitle}</span>}
-              </td>
-              <td data-col="type" data-label={ui.indexPage.colType}>{ctx.typeLabel(entry)}</td>
-              <td data-col="category" data-label={ui.indexPage.colCategory}>{ctx.catLabel(entry)}</td>
-              <td data-col="depth" data-label={ui.indexPage.colDepth}>{ctx.depthLabel(entry)}</td>
+              {columns.map((key) => {
+                if (key === 'year') {
+                  return <td class="indextable__year">{y.main}{y.sub && <small>{y.sub}</small>}</td>;
+                }
+                if (key === 'entry') {
+                  return (
+                    <td class="indextable__entry">
+                      <a href={entry.path}>{entry.title}</a>
+                      {entry.subtitle && <span class="indextable__sub">{entry.subtitle}</span>}
+                    </td>
+                  );
+                }
+                const value = key === 'type' ? ctx.typeLabel(entry)
+                  : key === 'category' ? ctx.catLabel(entry)
+                    : key === 'itemtype' ? (entry.item_type ? ctx.enumLabel('itemType', entry.item_type) : '')
+                      : key === 'level' ? (entry.level ? ctx.enumLabel('level', entry.level) : '')
+                        : ctx.depthLabel(entry);
+                return <td data-col={key} data-label={LABEL[key]}>{value}</td>;
+              })}
             </tr>
           );
         })}
