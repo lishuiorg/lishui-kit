@@ -28,7 +28,11 @@ export function filterAttrs(entry, ctx) {
   if (entry.time?.dynasty) attrs['data-dynasty'] = entry.time.dynasty;
   if (entry.item_type) attrs['data-itemtype'] = entry.item_type;
   if (entry.level) attrs['data-level'] = entry.level;
+  if (entry.unit_type) attrs['data-unittype'] = entry.unit_type;
+  if (entry.genre) attrs['data-genre'] = entry.genre;
   if (entry.town) attrs['data-town'] = entry.town;
+  if (entry.village_batch) attrs['data-village'] = entry.village_batch;
+  if (entry.surnames?.length) attrs['data-surname'] = entry.surnames.join(' ');
   if (entry.tags?.length) attrs['data-tags'] = entry.tags.join(' ');
   return attrs;
 }

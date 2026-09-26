@@ -1,12 +1,15 @@
 ---
 /* 信息卡：详情页侧栏的字段表。
    有年份时「时间」只给公元年，纪年另列一行；无年份时时间已退回纪年，不再重复。
-   纪年优先取顶层 era（地点条目的时期名），其次 time.era。 */
+   纪年优先取顶层 era（地点条目的时期名），其次 time.era。
+   行政区划一组（单元类型、所属镇街、驻地、面积、下辖村社区、传统村落、姓氏、坐标）
+   只在条目填了对应字段时出现，其余分站不受影响。 */
 const { entry, ctx } = Astro.props;
 const { ui } = ctx;
 
 const rows = [];
 const push = (key, value) => { if (value) rows.push({ key, value }); };
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : '');
 
 push(ui.detail.type, ctx.typeLabel(entry));
 push(ui.detail.category, ctx.catLabel(entry));
@@ -14,6 +17,17 @@ if (entry.item_type) push(ui.detail.itemType, ctx.enumLabel('itemType', entry.it
 if (entry.level) push(ui.detail.level, ctx.enumLabel('level', entry.level));
 if (entry.batch) push(ui.detail.batch, entry.batch);
 if (entry.guardian) push(ui.detail.guardian, ctx.gloss(entry.guardian, ctx.lang));
+if (entry.unit_type) push(ui.detail.unitType, ctx.enumLabel('unitType', entry.unit_type));
+if (entry.parentEntry?.title) push(ui.detail.parent, entry.parentEntry.title);
+if (entry.seat) push(ui.detail.seat, entry.seat);
+if (typeof entry.area_km2 === 'number') push(ui.detail.area, `${entry.area_km2} km²`);
+if (entry.communities !== undefined) push(ui.detail.communities, num(entry.communities));
+if (entry.villages !== undefined) push(ui.detail.villages, num(entry.villages));
+if (entry.traditional_village) push(ui.detail.traditionalVillage, ctx.gloss(entry.traditional_village, ctx.lang));
+if (entry.surnames?.length) push(ui.detail.surnames, entry.surnames.join(ctx.lang === 'zh' ? '、' : ', '));
+if (entry.coordinates?.lat !== undefined && entry.coordinates?.lng !== undefined) {
+  push(ui.detail.coordinates, `${entry.coordinates.lat}, ${entry.coordinates.lng}`);
+}
 push(ui.detail.time, ctx.timeText(entry));
 
 const eraRaw = entry.era || entry.time?.era || '';

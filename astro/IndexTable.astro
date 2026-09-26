@@ -1,8 +1,10 @@
 ---
 /* 索引表：全部条目分组的总览，供「有没有写」的快速核对。
    groups 由站点算好：{ key, name, range, items }。
-   columns 由站点给出列序，取值为 year / entry / type / category / itemtype / level / depth；
-   历史站按年代分组、首列是年份，文化站按类别分组、首列是条目。 */
+   columns 由站点给出列序，取值为 year / entry / type / category / itemtype / level /
+   unittype / parent / village / depth；
+   历史站按年代分组、首列是年份，文化站按类别分组、首列是条目，
+   街镇站按类别分组，列出单元类型、所属镇街与传统村落三列。 */
 const { groups = [], ctx, columns = ['year', 'entry', 'type', 'category', 'depth'] } = Astro.props;
 const { ui } = ctx;
 const LABEL = {
@@ -12,6 +14,9 @@ const LABEL = {
   category: ui.indexPage.colCategory,
   itemtype: ui.indexPage.colItemType,
   level: ui.indexPage.colLevel,
+  unittype: ui.indexPage.colUnitType,
+  parent: ui.indexPage.colParent,
+  village: ui.indexPage.colVillage,
   depth: ui.indexPage.colDepth,
 };
 const cols = columns.map((key) => ({ key, label: LABEL[key] }));
@@ -53,7 +58,10 @@ const filled = groups.filter((group) => group.items.length > 0);
                   : key === 'category' ? ctx.catLabel(entry)
                     : key === 'itemtype' ? (entry.item_type ? ctx.enumLabel('itemType', entry.item_type) : '')
                       : key === 'level' ? (entry.level ? ctx.enumLabel('level', entry.level) : '')
-                        : ctx.depthLabel(entry);
+                        : key === 'unittype' ? (entry.unit_type ? ctx.enumLabel('unitType', entry.unit_type) : '')
+                          : key === 'parent' ? (entry.parentEntry?.title || '')
+                            : key === 'village' ? (entry.traditional_village ? ctx.gloss(entry.traditional_village, ctx.lang) : '')
+                              : ctx.depthLabel(entry);
                 return <td data-col={key} data-label={LABEL[key]}>{value}</td>;
               })}
             </tr>

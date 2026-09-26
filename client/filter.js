@@ -13,7 +13,7 @@
  *          只有列表页放分页条，时间轴与索引页按期分组、不分页
  *   状态   [data-filterstate]  [data-noresult]  [data-filter-clear]
  *
- * 地址栏 #q= / #category= / #dynasty= / #town= / #tag= / #page= 可恢复筛选与页码；
+ * 地址栏 #q= / #category= / #dynasty= / #town= / #tag= 等可恢复筛选与页码（组名见 FILTER_GROUPS）；
  * 用户改动筛选或翻页后，脚本把这份状态写回地址栏（replaceState，不产生历史记录），
  * 语言切换按钮因此能把筛选与页码一并带过去。
  */
@@ -22,7 +22,10 @@ import { clampPage, pageCount, pageRange, pageWindow } from './paging.js';
 
 const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
 
-const FILTER_GROUPS = ['category', 'itemtype', 'level', 'dynasty', 'town', 'tag'];
+const FILTER_GROUPS = [
+  'category', 'unittype', 'genre', 'itemtype', 'level', 'dynasty',
+  'town', 'village', 'surname', 'tag',
+];
 const FILTER_SET = new Set(FILTER_GROUPS);
 const PAGE_KEY = 'page';
 /* 地址栏里由脚本接管、每次重写的键；其余键（如页内锚点）原样保留。 */

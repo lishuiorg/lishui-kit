@@ -4,8 +4,10 @@
    供 client/filter.js 在已生成的页面上筛选，不需要第二份数据。 */
 const { entry, ctx } = Astro.props;
 const y = ctx.axisYear(entry);
-/* 左上角：非遗项目给级别，其余条目给年份（无年份时退回纪年）。 */
-const top = entry.level ? ctx.enumLabel('level', entry.level) : y.main;
+/* 左上角：非遗项目给级别，行政区划条目给单元类型，文章给体裁，其余给年份（无年份时退回纪年）。 */
+const top = entry.level ? ctx.enumLabel('level', entry.level)
+  : entry.unit_type ? ctx.enumLabel('unitType', entry.unit_type)
+    : (y.main || (entry.genre ? ctx.enumLabel('genre', entry.genre) : ''));
 const tags = (entry.tags || []).slice(0, 3);
 const flags = ctx.flags(entry);
 const attrs = ctx.filterAttrs(entry);

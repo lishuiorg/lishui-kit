@@ -19,6 +19,12 @@ export const GLYPHS = {
   m6: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3.5l2.5 5.4 5.5.7-4.1 3.9 1.1 5.6L12 16.4l-4.9 2.7 1.1-5.6L4.1 9.6l5.5-.7Z"/></svg>',
   // 笔与卷：诗文与文献
   m7: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4.2 9.6 14.6l-1.1 4.1 4.1-1.1L23 7.2Z"/><path d="M3.5 20.5h9"/></svg>',
+  // 聚落：屋舍成片
+  m8: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M2.5 20.5h19"/><path d="M5 20.5v-6.2l3.4-2.6 3.4 2.6v6.2"/><path d="M11.8 20.5v-8l4.1-3 4.1 3v8"/><path d="M7 16.6h2.8"/></svg>',
+  // 街巷：道路与界格
+  m9: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 20.5 8 3.5M21 20.5 16 3.5"/><path d="M12 4.5v3M12 11v3M12 17.5v3"/></svg>',
+  // 宗祠：三进院落
+  m10: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M2.5 20.5h19"/><path d="M4 20.5v-9l8-4.6 8 4.6v9"/><path d="M9.5 20.5v-5.2h5v5.2"/><path d="M4 8.2 12 3.5l8 4.7"/></svg>',
   // 界面
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   sun: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
