@@ -34,6 +34,16 @@ export function filterAttrs(entry, ctx) {
   if (entry.village_batch) attrs['data-village'] = entry.village_batch;
   if (entry.surnames?.length) attrs['data-surname'] = entry.surnames.join(' ');
   if (entry.tags?.length) attrs['data-tags'] = entry.tags.join(' ');
+  /* 山水实体（山丘、河流、湖库、圩区堤闸）用的筛选属性。取值一律是语言中立的键：
+     枚举原样、镇街与称号与景区等级用站点推好的键，中英切换时地址栏里的筛选不失配。 */
+  if (entry.feature_type) attrs['data-featuretype'] = entry.feature_type;
+  if (entry.basin) attrs['data-basin'] = entry.basin;
+  if (entry.district_town_keys?.length) attrs['data-districttowns'] = entry.district_town_keys.join(' ');
+  if (entry.designation_keys?.length) attrs['data-designation'] = entry.designation_keys.join(' ');
+  if (entry.scenery_level) attrs['data-scenerygrade'] = entry.scenery_level;
+  if (entry.reservoir_class) attrs['data-reservoirclass'] = entry.reservoir_class;
+  if (entry.elevation_band) attrs['data-elevation'] = entry.elevation_band;
+  if (entry.route_mode) attrs['data-routemode'] = entry.route_mode;
   return attrs;
 }
 

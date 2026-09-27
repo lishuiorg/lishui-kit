@@ -2,9 +2,10 @@
 /* 索引表：全部条目分组的总览，供「有没有写」的快速核对。
    groups 由站点算好：{ key, name, range, items }。
    columns 由站点给出列序，取值为 year / entry / type / category / itemtype / level /
-   unittype / parent / village / depth；
+   unittype / parent / village / featuretype / basin / districttowns / depth；
    历史站按年代分组、首列是年份，文化站按类别分组、首列是条目，
-   街镇站按类别分组，列出单元类型、所属镇街与传统村落三列。 */
+   街镇站按类别分组，列出单元类型、所属镇街与传统村落三列，
+   山水站按类别分组、单列所属流域，列出实体类型、所属流域与跨涉镇街三列。 */
 const { groups = [], ctx, columns = ['year', 'entry', 'type', 'category', 'depth'] } = Astro.props;
 const { ui } = ctx;
 const LABEL = {
@@ -17,6 +18,9 @@ const LABEL = {
   unittype: ui.indexPage.colUnitType,
   parent: ui.indexPage.colParent,
   village: ui.indexPage.colVillage,
+  featuretype: ui.indexPage.colFeatureType,
+  basin: ui.indexPage.colBasin,
+  districttowns: ui.indexPage.colDistrictTowns,
   depth: ui.indexPage.colDepth,
 };
 const cols = columns.map((key) => ({ key, label: LABEL[key] }));

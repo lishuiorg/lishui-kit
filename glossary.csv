@@ -1,5 +1,5 @@
 zh,en,category,note
-溧水,Lishui,地名,必须与浙江丽水（Lishui
+溧水,Lishui,地名,"必须与浙江丽水（Lishui, Zhejiang）区分"
 溧水区,Lishui District,行政区划,首次出现用全称，后文可用 the district
 溧水县,Lishui County,行政区划,2013 年撤县设区前的县制名称
 溧水州,Lishui Zhou,行政区划,元代由县升州，英文保留州制音译 Zhou 并附 prefecture 说明
@@ -119,7 +119,7 @@ zh,en,category,note
 李巷,Lixiang,地名,白马镇石头寨村李巷；「红色李巷」见该条
 望京街,Wangjing Street,地名,永阳镇永昌桥所在街
 团山,Tuanshan,山体,柘塘街道乌山团山，宋瑛墓所在
-乌山,Wushan,山体,柘塘街道
+乌山,Wushan,山体,柘塘街道；「乌山」另为原乡镇名，今柘塘街道居民委员会
 秋湖山,Qiuhu Mountain,山体,永阳街道，明代采石场所在
 东庐山,Donglu Mountain,山体,永阳镇，秦淮源头所在
 大金山,Dajin Mountain,山体,白马镇
@@ -481,3 +481,102 @@ zh,en,category,note
 和平村,Heping Village,行政区划,东屏街道
 丽山村,Lishan Village,行政区划,东屏街道
 白鹿村,Bailu Village,行政区划,东屏街道
+天生桥河,Tianshengqiao River,水系,水务口径名，与胭脂河同指一段；「天生桥」另有古迹词条
+东屏湖,Dongping Lake,湖泊,方便水库的俗称之一，省级湿地公园所在
+圩,Polder,水利,通名意译；街镇站原音译作 wei，山水分站统一改作 Polder（山水分站计划 4.4）
+廻峰山,Huifeng Mountain,山体,白马镇；神仙洞所在，顶峰标高 229 米（山水分站计划 4.4）
+西横山,Xiheng Mountain,山体,区境西部；秦淮河与石臼湖两大水系分水岭
+芳山,Fangshan Mountain,山体,晶桥镇芝山行政村一带；海拔 220 米以上
+茅山山脉,Maoshan range,山体,廻峰山所依山系；山脉中段在溧水境内
+傅家边,Fujiabian,地名,洪蓝街道；通名不显，整体音译，不加 Village
+二干河,Ergan River,水系,秦淮河支流；方便水库所在河流；编号整体音译
+三干河,Sangan River,水系,秦淮河支流；编号整体音译
+新桥河,Xinqiao River,水系,石臼湖水系入湖河道
+溧水河,Lishui River,水系,秦淮河水系
+云鹤支河,Yunhe River,水系,石臼湖水系支河；专名音译 + 意译通名支河
+卧龙水库,Wolong Reservoir,水库,六座中型水库之一
+老鸦坝水库,Laoyaba Reservoir,水库,六座中型水库之一
+姚家水库,Yaojia Reservoir,水库,六座中型水库之一
+赭山头水库,Zheshantou Reservoir,水库,六座中型水库之一
+天生桥闸,Tiansheng Bridge Sluice,水利,秦淮河与石臼湖两大水系的分水岭闸
+石臼湖堤防,Shijiu Lake dike,水利,石臼湖湖堤
+章西圩撇洪沟,Zhangxi Polder diversion channel,水利,撇洪沟
+章西圩,Zhangxi Polder,水利,溧水开发区（柘塘街道）一带；「十三五」12 座重点泵站之一
+横山,Hengshan,山体,西横山与江宁区、安徽当涂县山体的总称
+芝山,Zhishan,地名,晶桥镇芝山行政村；芳山所在
+湫湖泵站,Qiuhu Pumping Station,水利,秦淮河与石臼湖水系连通工程的补水泵站
+当涂闸,Dangtu Sluice,水利,安徽省境内；石臼湖出口控制工程，非溧水境内工程
+芜湖闸,Wuhu Sluice,水利,安徽省境内；石臼湖出口控制工程，非溧水境内工程
+江苏省林业局,Jiangsu Provincial Forestry Bureau,机构,
+江苏省水利厅,Jiangsu Provincial Department of Water Resources,机构,
+江苏省自然资源厅,Jiangsu Provincial Department of Natural Resources,机构,
+江苏省生态环境厅,Jiangsu Provincial Department of Ecology and Environment,机构,
+江苏省农业农村厅,Jiangsu Provincial Department of Agriculture and Rural Affairs,机构,
+江苏省发展和改革委员会,Jiangsu Provincial Development and Reform Commission,机构,
+南京市人民政府,Nanjing Municipal People's Government,机构,
+南京市水务局,Nanjing Municipal Water Affairs Bureau,机构,
+南京市文化和旅游局,Nanjing Municipal Bureau of Culture and Tourism,机构,
+南京市绿化园林局,Nanjing Municipal Bureau of Greening and Landscaping,机构,
+溧水区水务局,Lishui District Water Affairs Bureau,机构,
+溧水区农业农村局,Lishui District Bureau of Agriculture and Rural Affairs,机构,
+溧水区民政局,Lishui District Civil Affairs Bureau,机构,
+溧水区林场,Lishui District Forest Farm,机构,区属林场；设东庐、芳山、秋湖、平山四个分场
+宁镇扬,Ningzhenyang,地名,南京—镇江—扬州丘陵山区的合称
+秦淮河水系,Qinhuai River system,水系,
+石臼湖水系,Shijiu Lake system,水系,
+太湖水系,Taihu system,水系,区境东南角 2.73 平方公里属其湖西地区
+生态保护红线,ecological protection red line,制度,
+自然保护地,natural protected area,制度,
+无想山国家森林公园,Jiangsu Lishui Wuxiang Mountain National Forest Park,保护地,2015 年 1 月批准设立
+江苏溧水石臼湖省级湿地公园,Jiangsu Lishui Shijiu Lake Provincial Wetland Park,保护地,2019 年 11 月批复设立
+东屏湖省级湿地公园,Dongping Lake Provincial Wetland Park,保护地,方便水库所在；2019 年 3 月 20 日苏林湿〔2019〕10 号
+中国南京国际梅花节,China Nanjing International Plum Blossom Festival,事件,溧水傅家边为分会场
+溧水赏梅季,Lishui Plum Blossom Season,事件,溧水区自办活动；与中国南京国际梅花节不是同一名称
+南京溧水草莓马拉松,Nanjing Lishui Strawberry Marathon,事件,2024 年赛事名；与「溧水半程马拉松」为同一赛事的逐年名称
+无想周末,Wuxiang Weekend,事件,2026 年配套活动
+溧马趣跑,Lishui Marathon Fun Run,事件,溧马为溧水马拉松简称，按全称既有译法作 Lishui Marathon；正文原用通名 fun run，入表后统一
+小天鹅,Tundra swan,物种,英文稿正文按来源原文作 swans
+云鹤山村,Yunheshan Village,地名,晶桥镇下辖村
+沙岗村,Shagang Village,地名,云鹤支河入新桥河处
+沙岗桥,Shagang Bridge,水利,云鹤支河断面
+仙坛水库,Xiantan Reservoir,水库,《溧水区水利工程管理和保护办法》第二十五条名单
+云鹤山水库,Yunheshan Reservoir,水库,《溧水区水利工程管理和保护办法》第二十五条名单
+山里沟水库,Shanligou Reservoir,水库,《溧水区水利工程管理和保护办法》第二十五条名单
+曹庄水库,Caozhuang Reservoir,水库,《溧水区水利工程管理和保护办法》第二十五条名单
+乌刹桥,Wucha Bridge,水利,溧水河省考断面；东屏街道环评报告表记作二干河入秦淮河处
+开太桥,Kaitai Bridge,水利,二干河省考断面
+群力,Qunli,地名,原乡镇名，今柘塘街道居民委员会
+史家庄闸,Shijiazhuang Sluice,水利,三干河治理段起点
+石湫坝闸站,Shiqiuba Sluice-Pump Station,水利,三干河治理段终点
+南岗河,Nangang River,水系,石湫圩西侧，于史家庄闸闸下汇入三干河
+石岗桥,Shigang Bridge,水利,三干河市考断面
+群英桥,Qunying Bridge,水利,新桥河省考断面
+白马河,Baima River,水系,新桥河组成部分，不另算一条河道
+方山埭,Fangshandai,地名,江宁区境内，秦淮河两源汇合地
+张塘角,Zhangtangjiao Village,地名,马拉松赛道沿线
+张许村,Zhangxu Village,地名,和凤镇沿湖露营点
+许家村,Xujia Village,地名,和凤镇沿湖草海景观处
+三星村,Sanxing Village,地名,石湫街道沿湖草海景观处
+龙猫草海,Longmao Grass Sea,地名,和凤中杨村旁观鸟点；引号内可作 Longmao grass sea
+无想寺水库,Wuxiang Temple Reservoir,水库,马拉松赛道地标
+梅花山,Plum Blossom Mountain,山体,马拉松赛道地标
+神山湖,Shenshan Lake,湖泊,露营基地之一
+金色庄园,Golden Manor,机构,南京金色庄园草莓基地
+无想水镇,Wuxiang Water Town,地名,迷你跑终点
+骆山花火露营公园,Luoshan Fireworks Camping Park,机构,和凤镇，2023 年建成
+梦华苑花海露营基地,Menghuayuan Flower Sea Camping Base,机构,2023 年同步打造的露营基地
+悦野轻奢,Yueye Light Luxury,机构,2023 年同步打造的露营基地
+句容河,Jurong River,水系,秦淮河北源，句容市境内
+宝华山,Baohua Mountain,山体,句容市境内，秦淮河北源所出
+致远路,Zhiyuan Road,道路,马拉松起终点所在
+涌泉路,Yongquan Road,道路,马拉松起终点所在
+无想山大道,Wuxiang Mountain Avenue,道路,马拉松路段
+竹海大道,Zhuhai Avenue,道路,2024 年折返点
+徒村王线,Tucunwang Line,道路,乡村公路线名
+八里岗路,Baligang Road,道路,迷你跑路段
+随园路,Suiyuan Road,道路,迷你跑路段
+金井路,Jinjing Road,道路,迷你跑路段
+105 县道无付线,County Road 105 Wufu Line,道路,2026 年折返点
+305 县道蒲杜线,County Road 305 Pudu Line,道路,马拉松路段
+溧水半程马拉松,Lishui Half Marathon,事件,
+傅家边农业科技观光园,Fujiabian Agricultural Science and Technology Sightseeing Park,机构,AAA 级景区；名录名称为正名

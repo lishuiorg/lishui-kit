@@ -171,6 +171,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # 每日重建一次：内容库合并不会自动触发分站重建（见主规划 6.1），
+  # 这条定时兜住内容更新与门户站点清单的变化。UTC 18:00 = 北京时间次日 02:00。
+  schedule:
+    - cron: '0 18 * * *'
 
 permissions:
   contents: read

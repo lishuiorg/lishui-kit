@@ -25,6 +25,28 @@ if (entry.communities !== undefined) push(ui.detail.communities, num(entry.commu
 if (entry.villages !== undefined) push(ui.detail.villages, num(entry.villages));
 if (entry.traditional_village) push(ui.detail.traditionalVillage, ctx.gloss(entry.traditional_village, ctx.lang));
 if (entry.surnames?.length) push(ui.detail.surnames, entry.surnames.join(ctx.lang === 'zh' ? '、' : ', '));
+/* 自然地理一组（实体类型、所属流域、跨涉镇街、规模、水库等级与库容、称号、景区等级、
+   水质）：只在山水实体填了对应字段时出现，其余分站不受影响。 */
+const list = (v) => (Array.isArray(v) ? v.filter(Boolean).join(ctx.lang === 'zh' ? '、' : ', ') : '');
+if (entry.feature_type) push(ui.detail.featureType, ctx.enumLabel('featureType', entry.feature_type));
+if (entry.basin) push(ui.detail.basin, ctx.enumLabel('basin', entry.basin));
+if (entry.district_towns?.length) {
+  push(ui.detail.districtTowns, entry.district_towns.map((t) => ctx.gloss(t, ctx.lang)).join(ctx.lang === 'zh' ? '、' : ', '));
+}
+if (entry.elevation_m !== undefined) push(ui.detail.elevation, `${entry.elevation_m} ${ui.detail.metreUnit}`);
+if (entry.length_km !== undefined) push(ui.detail.length, `${entry.length_km} ${ui.detail.kilometreUnit}`);
+if (entry.reservoir_class) push(ui.detail.reservoirClass, ctx.enumLabel('reservoirClass', entry.reservoir_class));
+if (entry.capacity_10k_m3 !== undefined) {
+  push(ui.detail.capacity, `${entry.capacity_10k_m3} ${ui.detail.capacityUnit}`);
+}
+if (entry.designation?.length) push(ui.detail.designation, list(entry.designation.map((v) => ctx.gloss(v, ctx.lang))));
+if (entry.scenery_grade) push(ui.detail.sceneryGrade, ctx.gloss(entry.scenery_grade, ctx.lang));
+if (entry.water_quality) push(ui.detail.waterQuality, ctx.gloss(entry.water_quality, ctx.lang));
+if (entry.route_mode) push(ui.detail.routeMode, ctx.enumLabel('routeMode', entry.route_mode));
+if (entry.route_km !== undefined) push(ui.detail.routeKm, `${entry.route_km} ${ui.detail.kilometreUnit}`);
+if (entry.route_nodes?.length) push(ui.detail.routeNodes, list(entry.route_nodes));
+if (entry.held_month) push(ui.detail.heldMonth, ctx.gloss(entry.held_month, ctx.lang));
+if (entry.host) push(ui.detail.host, ctx.gloss(entry.host, ctx.lang));
 if (entry.coordinates?.lat !== undefined && entry.coordinates?.lng !== undefined) {
   push(ui.detail.coordinates, `${entry.coordinates.lat}, ${entry.coordinates.lng}`);
 }

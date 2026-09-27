@@ -25,7 +25,12 @@ const norm = (s) => (s || '').toLowerCase().replace(/\s+/g, '');
 const FILTER_GROUPS = [
   'category', 'unittype', 'genre', 'itemtype', 'level', 'dynasty',
   'town', 'village', 'surname', 'tag',
+  'featuretype', 'basin', 'districttowns', 'designation',
+  'scenerygrade', 'reservoirclass', 'elevation', 'routemode',
 ];
+/* 一个条目可以同时命中多个取值的组：属性里是空格分隔的一串，命中任一即算命中。
+   其余组是一对一的枚举，属性值等于所选值才算命中。 */
+const MULTI_VALUE_GROUPS = new Set(['tag', 'districttowns', 'designation']);
 const FILTER_SET = new Set(FILTER_GROUPS);
 const PAGE_KEY = 'page';
 /* 地址栏里由脚本接管、每次重写的键；其余键（如页内锚点）原样保留。 */
@@ -72,8 +77,8 @@ export function initFilters() {
     for (const g of FILTER_GROUPS) {
       const v = active[g];
       if (!v) continue;
-      if (g === 'tag') {
-        if ((el.getAttribute('data-tags') || '').split(/\s+/).indexOf(v) === -1) return false;
+      if (MULTI_VALUE_GROUPS.has(g)) {
+        if ((el.getAttribute(`data-${g}`) || '').split(/\s+/).indexOf(v) === -1) return false;
       } else if ((el.getAttribute(`data-${g}`) || '') !== v) {
         return false;
       }
