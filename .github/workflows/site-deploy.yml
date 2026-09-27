@@ -57,6 +57,8 @@ jobs:
       # 收窄到本站子树 + 共享来源层 + 取值表 + 校验脚本，避免为构建一个站
       # 拉下全部 11 个站的 markdown 与全部 fulltext/ 影印文本。
       # 少检了会直接构建失败（读不到内容或取值表），不会静默出错。
+      # 例外：山水分站的 district_towns 要与街镇站的镇街名单比对，故街镇那棵
+      # 子树也要拉下来；不带它，该站校验会把所有镇街名都判成「不是现有镇街名」。
       - name: 检出内容库
         uses: actions/checkout@v4
         with:
@@ -70,6 +72,7 @@ jobs:
             scripts/
             content/${{ inputs.siteId }}/
             content/en/${{ inputs.siteId }}/
+            content/lishui-towns/towns/
           sparse-checkout-cone-mode: false
 
       # 站群清单由门户持有，取它生成跨站统一导航，本站不硬编码兄弟站点。
