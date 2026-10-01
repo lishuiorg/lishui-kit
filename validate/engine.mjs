@@ -38,7 +38,7 @@ export const BASE_REQUIRED = [
 
 export const BASE_ALLOWED = new Set([
   'id', 'type', 'lang', 'site', 'title', 'subtitle', 'summary', 'tags', 'status', 'verified',
-  'confidence', 'depth', 'sources', 'related', 'updated',
+  'confidence', 'depth', 'sources', 'related', 'updated', 'distinct_from',
   'time', 'place_ref', 'outcome',
   'place_type', 'era', 'protection_level', 'protection_batch', 'address', 'coordinates',
   'genre', 'period', 'citations',
@@ -343,6 +343,15 @@ export function validateContent({
       }
     }
 
+    /* 「不合并」声明：须指向真实存在的条目，否则等于凭空豁免 */
+    if (d.distinct_from !== undefined) {
+      if (!Array.isArray(d.distinct_from)) err(f, 'distinct_from 需为数组');
+      else for (const r of d.distinct_from) {
+        if (!/^ls:[a-z]+:[a-z0-9]+(-[a-z0-9]+)*$/.test(r)) err(f, `distinct_from 取值格式不合规：${r}`);
+        else if (!byId.has(r) && !siteOf(r)) err(f, `distinct_from 指向的条目不存在：${r}`);
+      }
+    }
+
     /* 时间字段 */
     if (d.time !== undefined) {
       const t = d.time;
@@ -453,6 +462,84 @@ export function validateContent({
 }
 
 /**
+ * 唯一性检查：一处所只许有一条条目。
+ *
+ * 2026-09-29 新增。此前一处所在两站各写一份，全库有 9 组这种重复，
+ * 每组两份都不完整——合并时才发现两边各查了一半，合起来才是一处的全貌。
+ * 靠人记得「先搜再写」不可靠，故在提交时拦下。
+ *
+ * 四条判据分开用，命中任一即报：
+ *   · 同 id／同 slug —— 硬重复，必错
+ *   · 同 address —— 同一处所的不同侧面，仍应合为一条
+ *   · 去修饰后同标题 —— 同一对象的不同说法（「上庄」与「上庄村」）
+ *
+ * **例外要显式声明**：确实属「同一地点的不同实体」而不该合的（文物本体 vs
+ * 非遗项目名、行政村 vs 村内聚落、山体 vs 山上的石刻），在条目的
+ * `distinct_from` 里写明对方条目 id 即可免报。不写就报——这样「不合并」是
+ * 一个可核查的决定，而不是沉默的疏漏；条目正文里也仍须写明理由。
+ *
+ * 只比中文稿：英文稿与中文稿必然同 id，重复计算没有意义。
+ */
+function checkUniqueness(results) {
+  const dup = [];
+  const declared = new Set();
+  const all = results.flatMap(({ siteId, result }) => result.entries
+    .filter((e) => e.lang === 'zh' && e.data && e.data.id)
+    .map((e) => ({
+      siteId,
+      id: e.data.id,
+      slug: e.slug,
+      title: String(e.data.title || ''),
+      type: e.type,
+      address: String(e.data.address || '').trim(),
+      file: e.file,
+      /* 本条声明「与这些 id 不是同一处所，故不合并」 */
+      distinctFrom: new Set([].concat(e.data.distinct_from || [])),
+    })));
+
+  /* 双方都要声明才算例外：单方声明不足以说明是同一处所的不同实体，
+     只有互指才说明两边都核对过。 */
+  const byIdAll = new Map(all.map((e) => [e.id, e]));
+  for (const e of all) {
+    for (const other of e.distinctFrom) {
+      const o = byIdAll.get(other);
+      if (o && o.distinctFrom.has(e.id)) declared.add([e.id, other].sort().join('|'));
+    }
+  }
+
+  /* 去修饰：去掉「村／遗址／摩崖石刻」一类尾巴与括注，只留主体名。 */
+  const stem = (t) => t
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(/(摩崖石刻|旧址|遗址|纪念地|风景区|景区|墓葬|宗祠|古桥|石刻|村落|村)$/g, '')
+    .trim();
+
+  const group = (keyFn, label) => {
+    const m = new Map();
+    for (const e of all) {
+      const k = keyFn(e);
+      if (!k) continue;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(e);
+    }
+    for (const [k, arr] of m) {
+      if (arr.length < 2) continue;
+      if (new Set(arr.map((x) => x.siteId)).size < 2) continue; /* 同站内不算 */
+      /* 该组内若每一条都两两声明过例外，则整组免报。 */
+      const excused = arr.every((x) => arr.every((y) => x === y || declared.has([x.id, y.id].sort().join('|'))));
+      if (excused) continue;
+      dup.push({ label, key: k, items: arr });
+    }
+  };
+
+  group((e) => e.id, '同 id');
+  group((e) => e.slug, '同 slug');
+  group((e) => e.address, '同 address');
+  group((e) => stem(e.title), '标题去修饰后相同');
+
+  return { dups: dup, declared: declared.size };
+}
+
+/**
  * 一次跑完全部站点。编排器（内容库 scripts/validate.mjs）把各站规则模块传进来，
  * 每站只套本站规则，互不干扰。
  * @param {object} opts
@@ -468,6 +555,22 @@ export function validateAll({ repo, sites, quiet = false } = {}) {
   const problems = results.flatMap(({ siteId, result }) => (
     result.problems.map((p) => ({ ...p, siteId }))
   ));
+
+  /* 唯一性检查跨站，故只能在全部站点跑完后做一次。 */
+  const { dups, declared } = checkUniqueness(results);
+  for (const g of dups) {
+    for (const it of g.items) {
+      problems.push({
+        level: 'error',
+        file: it.file,
+        msg: `一处所一条目：与 ${g.items.filter((x) => x.siteId !== it.siteId).map((x) => x.siteId + '/' + x.slug).join('、')} ${g.label}（${g.key}）。`
+          + '两站各写一份必然各缺一半，应合并到一处；确属同一地点的不同实体（如文物本体与非遗项目名），'
+          + '须在两条正文各写明不合并的理由',
+        siteId: it.siteId,
+      });
+    }
+  }
+
   const errors = problems.filter((p) => p.level === 'error');
   const warns = problems.filter((p) => p.level === 'warn');
 
@@ -479,9 +582,10 @@ export function validateAll({ repo, sites, quiet = false } = {}) {
     for (const { siteId, result } of results) {
       console.log(`[${siteId}] 条目 ${result.entries.length} 条，来源引用 ${result.sources.size} 份`);
     }
+    console.log(`一处所一条目：跨站重复 ${dups.length} 组；已声明「非同一处所」的例外 ${declared} 对`);
     console.log(`合计错误 ${errors.length} 项，警告 ${warns.length} 项`);
     if (errors.length === 0) console.log('校验通过。');
   }
 
-  return { results, problems, errors, warns };
+  return { results, problems, errors, warns, dups };
 }
