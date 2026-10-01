@@ -61,6 +61,11 @@ if (entry.protection_level) push(ui.detail.protection, ctx.enumLabel('protection
 if (entry.protection_batch) push(ui.detail.protectionBatch, entry.protection_batch);
 if (entry.address) push(ui.detail.address, ctx.gloss(entry.address, ctx.lang));
 if (entry.genre) push(ui.detail.genre, ctx.enumLabel('genre', entry.genre));
+/* 人物一组（身份、出生年代、与溧水的关系）：只在人物条目填了对应字段时出现。
+   relation 可以缺——本库允许「不任溧水而见于溧水志」的人入册，此时正文须另有一节交代。 */
+if (entry.role) push(ui.detail.role, ctx.enumLabel('personRole', entry.role));
+if (entry.birth_era) push(ui.detail.birthEra, ctx.enumLabel('birthEra', entry.birth_era));
+if (entry.relation) push(ui.detail.relation, ctx.enumLabel('relation', entry.relation));
 push(ui.detail.depth, ctx.depthLabel(entry));
 push(ui.detail.confidence, ctx.confLabel(entry));
 push(ui.detail.updated, entry.updated);
