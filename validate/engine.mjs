@@ -146,10 +146,12 @@ export function validateContent({
   const translatable = (zh) => glossaryZh.has(zh) || flatTerms[zh] !== undefined;
   /* 年号通用式：纪年串里含任一年号词根即视为可译（glossary.csv「年号通用式」规则）。 */
   const eraTranslatable = (v) => translatable(v) || eraRoots.some((r) => v.includes(r));
+  /* 原先这里逐项列举八类取值表，新增一站的枚举就得回来改底座——
+     人物站的 role／birth_era 正是这样漏过的。改为遍历全部取值表，
+     分站新增的枚举自动纳入，底座不再需要知道有哪几站。 */
   const enumValues = [
-    ...(enums.placeType || []), ...(enums.genre || []), ...(enums.protectionLevel || []),
-    ...(enums.dynasty || []), ...(enums.itemType || []), ...(enums.level || []),
-    ...(enums.unitType || []), ...allowedTags,
+    ...Object.values(enums).flatMap((v) => (Array.isArray(v) ? v : [])),
+    ...allowedTags,
   ];
   for (const v of new Set(enumValues)) {
     if (CJK.test(v) && !translatable(v)) {
