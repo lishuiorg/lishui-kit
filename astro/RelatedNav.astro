@@ -1,6 +1,8 @@
 ---
-/* 关联条目：正文提到、且已在同站有条目的地点与相关条目。
-   解析在内容装载时完成（entry.placeRefResolved / entry.relatedResolved）。 */
+/* 关联条目：正文提到、且已有条目的地点与相关条目。
+   解析在内容装载时完成（entry.placeRefResolved / entry.relatedResolved）。
+   一处所一条目原则下，跨站引用是常态：目标条目在另一站，path 为该站的绝对地址，
+   故标 rel="external"，读者能看出这条会跳到别的站。 */
 const { entry, ctx } = Astro.props;
 const items = [...(entry.placeRefResolved || []), ...(entry.relatedResolved || [])];
 ---
@@ -11,7 +13,7 @@ const items = [...(entry.placeRefResolved || []), ...(entry.relatedResolved || [
     <ul>
       {items.map((item) => (
         <li>
-          <a href={item.path}>
+          <a href={item.path} rel={item.crossSite ? 'external' : undefined}>
             <span class="rel__kind">{ctx.typeLabel(item)}</span>{item.title}
           </a>
         </li>

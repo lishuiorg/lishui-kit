@@ -333,11 +333,12 @@ export function validateContent({
       else for (const r of d.related) {
         if (!/^ls:[a-z]+:[a-z0-9]+(-[a-z0-9]+)*$/.test(r)) err(f, `related 取值格式不合规：${r}`);
         else if (!byId.has(r)) {
-          const owner = siteOf(r);
-          if (owner) {
-            err(f, `related 指向其他分站的条目：${r} 属于 ${owner}。`
-              + '内容合库后 related 只在本站范围内解析，跨站引用请改用绝对 URL');
-          } else err(f, `关联的条目不存在：${r}`);
+          /* 跨站关联：2026-09-29 起合法。一处所一条目原则下，同一处所只在「首发站」
+             成条，另一站要指向它时即成跨站；此前一律判错，导致合并重复条目时必须
+             删掉引用、拆掉信息链。现放行且不报警——跨站是合并后的常态而非缺陷，
+             「谁指向谁」由条目正文的合并说明记录；真正要拦的是指向不存在条目的错 id，
+             那一条仍判错。 */
+          if (!siteOf(r)) err(f, `关联的条目不存在：${r}`);
         }
       }
     }

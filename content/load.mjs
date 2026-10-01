@@ -15,9 +15,9 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { marked } from 'marked';
 import { loadMarkdown, listMarkdown } from './frontmatter.mjs';
-import { LANGS } from '../i18n/paths.mjs';
+import { LANGS, entryPath } from '../i18n/paths.mjs';
 import { readGlossary } from '../i18n/glossary.mjs';
-import { readSiteSchema, readTags, readTerms } from '../schema/read.mjs';
+import { readSiteRegistry, readSiteSchema, readTags, readTerms } from '../schema/read.mjs';
 
 /** 来源层的三个子目录，对应三种归档深度。 */
 export const SOURCE_DIRS = ['fulltext', 'excerpts', 'records'];
@@ -96,9 +96,49 @@ export function loadContent({ contentDir, siteId, publishedOnly = true }) {
     byId.get(e.id)[e.lang] = e;
   }
 
+  /* related 的解析要能跨站。一处所一条目原则下，同一处所只在「首发站」成条，
+     别的站要指向它时即成跨站引用；此前 byId 只装本站条目，跨站引用被静默丢弃，
+     读者看到的是一条断链。2026-09-29 起按全库 id 索引解析，并据 schema/sites.json
+     的 host 拼出目标站的绝对地址，使跨站引用渲染成可点的外链而不是空 <a>。 */
+  const registry = readSiteRegistry(contentDir);
+  const hostOf = (id) => registry[id]?.host || '';
+  const globalById = new Map();
+  for (const [id, site] of Object.entries(registry)) {
+    for (const dirName of Object.keys(site.typeDirs || {})) {
+      for (const lang of LANGS) {
+        const base = lang === 'zh'
+          ? join(contentDir, 'content', id, dirName)
+          : join(contentDir, 'content', 'en', id, dirName);
+        for (const file of listMarkdown(base)) {
+          const { data } = loadMarkdown(file);
+          if (!data || !data.id) continue;
+          if (!globalById.has(data.id)) globalById.set(data.id, {});
+          globalById.get(data.id)[lang] = {
+            id: data.id, lang, dirName, slug: String(data.id).split(':').pop(),
+            title: data.title || '', summary: data.summary || '',
+            type: site.typeDirs[dirName], ownerSite: id, host: hostOf(id),
+          };
+        }
+      }
+    }
+  }
+
   for (const e of entries) {
-    e.relatedResolved = (e.related || []).map((id) => byId.get(id)?.[e.lang]).filter(Boolean);
-    e.placeRefResolved = (e.place_ref || []).map((id) => byId.get(id)?.[e.lang]).filter(Boolean);
+    /* 本站条目优先，path 为站内相对路径；本站没有的取全库条目，
+       path 拼成目标站的绝对地址，并标 crossSite 供渲染层加「往××站」提示。 */
+    const pick = (id) => {
+      const own = byId.get(id)?.[e.lang];
+      if (own) return own;
+      const other = globalById.get(id)?.[e.lang];
+      if (!other) return undefined;
+      return {
+        ...other,
+        crossSite: true,
+        path: other.host ? `https://${other.host}${entryPath(other)}` : entryPath(other),
+      };
+    };
+    e.relatedResolved = (e.related || []).map(pick).filter(Boolean);
+    e.placeRefResolved = (e.place_ref || []).map(pick).filter(Boolean);
   }
 
   /* 站点口径：来源层在库里是全局共享的一份，但站点页面上的「来源记录」数
