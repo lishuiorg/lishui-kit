@@ -38,6 +38,11 @@
     "link-only",
     "permission-required"
   ],
+  "reliability": [
+    "primary",
+    "secondary",
+    "tertiary"
+  ],
   "archive": [
     "fulltext",
     "link-registered",

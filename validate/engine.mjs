@@ -193,6 +193,14 @@ export function validateContent({
         warn(f, '未填 url 且归档状态不是 catalogued-only，请在 note 说明');
       }
       if (!d.note) warn(f, '未填 note，来源的授权判断依据无处可查');
+      /* 可信度与授权是两个独立维度：rights 管能不能引，reliability 管可不可信。
+         存量 307 张已于 2026-09-29 按 publisher 与 note 实际内容批量补齐，
+         故此处为错误而非警告——漏标会让「某条结论的支柱有多硬」无从判断。 */
+      if (!d.reliability) {
+        err(f, '缺少 reliability（可信度 primary/secondary/tertiary）');
+      } else if (!oneOf(enums.reliability, d.reliability)) {
+        err(f, `reliability 取值不在取值表内：${d.reliability}`);
+      }
       /* 英文页的来源区显示出版者的英文名；note 与引文位置按约定保留原文献语言。 */
       if (CJK.test(String(d.publisher || '')) && !d.publisherEn) {
         err(f, 'publisher 为中文，需补 publisherEn，否则英文页来源区会漏出中文机构名');
