@@ -12,7 +12,7 @@ name: 分站构建并发布
 #         siteId: lishui-history
 #
 # 内容库已合为单库，仓库名与检出目录名都是站群常量，故不再由各站传入：
-# 各站只报自己的内容侧 siteId，用于稀疏检出本站子树。
+# 各站仍报自己的内容侧 siteId（作站点标识留用；内容侧现已整棵检出，见下）。
 
 on:
   workflow_call:
@@ -22,7 +22,7 @@ on:
         required: true
         type: string
       siteId:
-        description: 本站内容侧 siteId，即内容库 content/<siteId>/ 子树名，如 lishui-history
+        description: 本站内容侧 siteId，如 lishui-history。内容侧现已整棵 content/ 检出，此项目前仅作站点标识留用
         required: true
         type: string
       contentRepo:
@@ -53,12 +53,12 @@ jobs:
           repository: lishuiorg/lishui-kit
           path: lishui-kit
 
-      # 内容库合库后按站分区，而每站只读自己那一棵子树。稀疏检出把内容库
-      # 收窄到本站子树 + 共享来源层 + 取值表 + 校验脚本，避免为构建一个站
-      # 拉下全部 11 个站的 markdown 与全部 fulltext/ 影印文本。
-      # 少检了会直接构建失败（读不到内容或取值表），不会静默出错。
-      # 例外：山水分站的 district_towns 要与街镇站的镇街名单比对，故街镇那棵
-      # 子树也要拉下来；不带它，该站校验会把所有镇街名都判成「不是现有镇街名」。
+      # 内容库合库后按站分区，稀疏检出只保留构建与校验真正要读的部分。
+      # ⚠ 内容侧必须整棵 `content/` 检出，**不能只拉本站子树**：引擎允许跨站
+      # related／distinct_from（「一处所一条目」下，指向首发站是常态），而它判定
+      # 「这是跨站合法引用」靠 idIndex 扫磁盘上的 content/<siteId>/。只拉本站
+      # 子树时，指向别站的引用因查不到归属而被判成「条目不存在」——2026-10-01
+      # 起四站发布连续失败，即由此而来（构建期校验先失败，站点停在 09-30 的内容）。
       - name: 检出内容库
         uses: actions/checkout@v4
         with:
@@ -70,9 +70,7 @@ jobs:
             schema/
             sources/
             scripts/
-            content/${{ inputs.siteId }}/
-            content/en/${{ inputs.siteId }}/
-            content/lishui-towns/towns/
+            content/
           sparse-checkout-cone-mode: false
 
       # 站群清单由门户持有，取它生成跨站统一导航，本站不硬编码兄弟站点。
