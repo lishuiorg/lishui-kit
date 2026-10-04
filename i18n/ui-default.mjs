@@ -193,6 +193,7 @@ export const UI_DEFAULT = {
       "latestNote": "Ordered by the updated field, six at most.",
       "latestSeeAll": "See every entry",
       "rulesTitle": "Editorial rules",
+      "rulesNote": "Four rules, enforced by the content repository’s validation script before anything is stored.",
       "browseAll": "Browse all"
     },
     "list": {
@@ -259,6 +260,7 @@ export const UI_DEFAULT = {
       "bilingualTitle": "Languages and themes",
       "bilingualBody": "Chinese is served from the root and English from /en/, with page paths matching one to one, so switching language keeps you on the same page. The theme follows your system setting by default and can be switched by hand; the choice is stored in your browser and does not flash on reload.",
       "fixTitle": "Corrections",
+      "fixBody": "If you find a factual error, a dead link or an inconsistent rendering of a proper name, open an issue in the network’s repository, giving the entry ID and your evidence. Once checked, the entry is corrected and its updated field changed to that day.",
       "gateTitle": "Validation",
       "techTitle": "How it is built",
       "statsTitle": "Current size",
